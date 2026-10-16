@@ -65,11 +65,6 @@
                 "type": "string",
                 "enum": ["overlap", "below", "follow"],
                 "optional": true
-              },
-              "toolbarPage": {
-                "type": "string",
-                "enum": ["overlay", "push"],
-                "optional": true
               }
             }
           }

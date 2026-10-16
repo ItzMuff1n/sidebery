@@ -175,68 +175,16 @@ this.browserUI = class extends ExtensionAPI {
     })
     mo.observe(box, { attributes: true, attributeFilter: ['hidden', 'sidebarcommand'] })
 
-    // An auto-hidden toolbox (position: fixed, toolbar.css or userChrome.css) overlays the top of the window.
-    // Everything below follows the timing of the toolbox's own opacity transition, whatever made it
-    // show or hide, so it moves in sync with it.
+    // Top edge vs an auto-hidden toolbox (position: fixed, from userChrome.css):
+    // "overlap" ignores it, "below" always leaves room for it, "follow" moves with it, using the
+    // timing of the toolbox's own opacity transition, whatever made it show or hide.
     const toolbox = doc.getElementById('navigator-toolbox')
-    const browserEl = doc.getElementById('browser')
     let toolboxH = 0
     let toolboxShown = false
-    const toolboxFixed = () => win.getComputedStyle(toolbox).position === 'fixed'
-    const pushOn = () => !!this.conf.toolbar && this.conf.toolbarPage === 'push' && toolboxFixed()
-
-    // Page: "overlay" leaves it under the toolbox, "push" moves the whole browser area (page and sidebar)
-    // down while the toolbox is shown. It slides with a transform (no re-layout per frame, the bottom goes
-    // past the window edge for a moment), and once the slide ends the transform is swapped for a real
-    // margin in the same frame, so the page gets its bottom back with one resize. Hiding swaps back first.
-    let pushTarget = 0 // px the area is moving to
-    let pushMargin = false // the shown state is laid out as a margin
-    const setPushStyle = (transform, margin, transition = 'none') => {
-      browserEl.style.setProperty('transition', transition, 'important')
-      browserEl.style.setProperty('transform', transform, 'important')
-      browserEl.style.setProperty('margin-top', margin, 'important')
-    }
-    const resetPush = () => {
-      pushTarget = 0
-      pushMargin = false
-      for (const p of ['transition', 'transform', 'margin-top']) browserEl.style.removeProperty(p)
-    }
-    const push = (shown, t) => {
-      if (!pushOn()) {
-        if (pushTarget || pushMargin) resetPush()
-        return
-      }
-      const transition = `transform ${t.duration}ms ${t.easing} ${t.delay}ms`
-      if (shown) {
-        if (pushMargin) return
-        pushTarget = toolboxH
-        setPushStyle(`translateY(${toolboxH}px)`, '0px', transition)
-      } else {
-        if (pushMargin) {
-          // margin -> equal transform, invisible: the top stays where it is, the bottom grows past the edge
-          setPushStyle(`translateY(${toolboxH}px)`, '0px')
-          browserEl.getBoundingClientRect()
-          pushMargin = false
-        }
-        pushTarget = 0
-        setPushStyle('translateY(0px)', '0px', transition)
-      }
-    }
-    const onPushEnd = e => {
-      if (e.target !== browserEl || e.propertyName !== 'transform') return
-      if (pushTarget) {
-        setPushStyle('none', `${pushTarget}px`)
-        pushMargin = true
-      } else if (!pushMargin) resetPush()
-    }
-    browserEl.addEventListener('transitionend', onPushEnd)
-
-    // Sidebar top: "overlap" ignores the toolbox, "below" always leaves room for it, "follow" moves
-    // with it. Not needed while the page itself is pushed.
     const setTop = (dur = 0, ease = 'linear', delay = 0) => {
+      const fixed = win.getComputedStyle(toolbox).position === 'fixed'
       const mode = this.conf.top
-      const room =
-        toolboxFixed() && !pushOn() && (mode === 'below' || (mode === 'follow' && toolboxShown))
+      const room = fixed && (mode === 'below' || (mode === 'follow' && toolboxShown))
       box.style.setProperty('--sidebery-ah-top', `${room ? toolboxH : 0}px`)
       box.style.setProperty('--sidebery-ah-top-dur', `${dur}ms`)
       box.style.setProperty('--sidebery-ah-top-ease', ease)
@@ -246,18 +194,16 @@ this.browserUI = class extends ExtensionAPI {
     const ro = new win.ResizeObserver(entries => {
       toolboxH = Math.round(entries[0].borderBoxSize[0].blockSize)
       setTop()
-      if (pushMargin) setPushStyle('none', `${toolboxH}px`)
     })
     ro.observe(toolbox)
     const onToolboxTransition = e => {
-      if (e.target !== toolbox || e.propertyName !== 'opacity') return
+      if (e.target !== toolbox || e.propertyName !== 'opacity' || this.conf.top !== 'follow') return
       const anim = toolbox.getAnimations().find(a => a.transitionProperty === 'opacity')
       if (!anim) return
       const frames = anim.effect.getKeyframes()
       toolboxShown = parseFloat(frames[frames.length - 1].opacity) > 0.5
       const t = anim.effect.getTiming()
-      if (this.conf.top === 'follow') setTop(t.duration, t.easing, t.delay)
-      push(toolboxShown, t)
+      setTop(t.duration, t.easing, t.delay)
     }
     toolbox.addEventListener('transitionrun', onToolboxTransition)
 
@@ -310,7 +256,6 @@ this.browserUI = class extends ExtensionAPI {
       box.style.setProperty('--sidebery-ah-pull-in', `${this.conf.pullIn}ms`)
       box.setAttribute('sidebery-anim', this.conf.anim)
       setTop()
-      if (!pushOn()) resetPush()
     }
     update()
 
@@ -373,8 +318,6 @@ this.browserUI = class extends ExtensionAPI {
       doc.removeEventListener('popupshown', onPopupShown, true)
       doc.removeEventListener('popuphidden', onPopupHidden, true)
       setToolbar(false)
-      resetPush()
-      browserEl.removeEventListener('transitionend', onPushEnd)
       ro.disconnect()
       toolbox.removeEventListener('transitionrun', onToolboxTransition)
       box.removeAttribute('sidebery-autohide')
