@@ -336,6 +336,9 @@ async function onTabCreated(nativeTab: NativeTab, attached?: boolean) {
       // Restore some props
       tab.customColor = oldTab.customColor
       tab.reactive.customColor = oldTab.customColor ?? null
+      tab.locked = oldTab.locked
+      tab.reactive.locked = oldTab.locked ?? false
+      tab.lockEnd = oldTab.lockEnd
       tab.customTitle = oldTab.customTitle
       Tabs.renderTitle(tab)
     }
@@ -464,6 +467,13 @@ async function onTabCreated(nativeTab: NativeTab, attached?: boolean) {
     }
   }
 
+  // Keep new tabs out of the locked end blocks, unless they are added into a locked folder
+  // ponytail: split view chooser and pinned tabs keep their index
+  if (panel && !isSplt && !tab.pinned) {
+    const parentTab = Settings.state.tabsTree ? Tabs.byId[tab.openerTabId ?? D.NOID] : undefined
+    if (!Tabs.isInLockedUnit(parentTab, Tabs.byId)) index = Tabs.clampToFree(index, panel)
+  }
+
   // If the new tab has wrong position - move it
   if (panel && tab.index !== index) {
     handleNewTabMove(tab)
@@ -501,6 +511,10 @@ async function onTabCreated(nativeTab: NativeTab, attached?: boolean) {
   if (reopenedTabInfo?.customTitle) tab.customTitle = reopenedTabInfo.customTitle
   if (reopenedTabInfo?.customColor) {
     tab.reactive.customColor = tab.customColor = reopenedTabInfo.customColor
+  }
+  if (reopenedTabInfo?.locked) {
+    tab.reactive.locked = tab.locked = true
+    tab.lockEnd = reopenedTabInfo.lockEnd
   }
 
   // Check if tab should be reopened in different container
@@ -1200,6 +1214,8 @@ function onTabRemoved(tabId: ID, info: browser.tabs.RemoveInfo, detached?: boole
       panelId: tab.panelId,
       customTitle: tab.customTitle,
       customColor: tab.customColor,
+      locked: tab.locked,
+      lockEnd: tab.lockEnd,
     }
     Tabs.removedTabs.unshift(removedTabInfo)
     if (Tabs.removedTabs.length > 64) {

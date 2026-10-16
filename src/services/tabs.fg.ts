@@ -27,6 +27,7 @@ export * from 'src/services/tabs.fg.shadow'
 export * from 'src/services/tabs.fg.scroll'
 export * from 'src/services/tabs.fg.edit-title'
 export * from 'src/services/tabs.fg.colors'
+export * from 'src/services/tabs.fg.lock'
 export * from 'src/services/tabs.fg.rm'
 export * from 'src/services/tabs.fg.move'
 export * from 'src/services/tabs.fg.create'
@@ -54,6 +55,10 @@ export let reactive: TabsReactiveState = {
 
 export let ready = false
 export let tabsReinitializing = false
+/** Locked tabs anchors (lockEnd) are kept up to date only after the heal at load */
+export let lockAnchorsReady = false
+/** Bypass the locked end blocks clamp in Tabs.move while healing strays */
+export let healingLocks = false
 
 export let list: T.Tab[] = []
 export const setList = (l: T.Tab[]) => (list = l)
@@ -144,6 +149,7 @@ export function mutateNativeTabToSideberyTab(nativeTab: T.NativeTab): T.Tab {
       tooltip: Settings.state.forceUpdTooltip ? getTooltip(tab) : '',
       customTitleEdit: false,
       customColor: tab.customColor ?? null,
+      locked: tab.locked ?? false,
       url: tab.url,
       lvl: tab.lvl,
       branchLen: 0,
@@ -190,6 +196,7 @@ export async function load(src?: LoadSrc): Promise<void> {
   const ts = performance.now()
   Logs.info('Tabs.load')
 
+  lockAnchorsReady = false
   if (Tabs.shadowMode) Tabs.unloadShadowed()
 
   await Utils.retry({
@@ -263,11 +270,59 @@ export async function load(src?: LoadSrc): Promise<void> {
   waitingForTabsReadiness.forEach(cb => cb())
   waitingForTabsReadiness = []
 
+  // Tabs created before Sidebery loaded may sit inside the locked end blocks
+  await healLockedTabs()
+
   Logs.info(`Tabs.load: Done: ${performance.now() - ts}ms`)
+}
+
+/**
+ * Move stray tabs (unlocked roots beyond a locked anchor) back to the free zone
+ * ponytail: runs after `ready` so the native move events are handled as usual
+ */
+async function healLockedTabs(): Promise<void> {
+  healingLocks = true
+  try {
+    for (const panel of Sidebar.panels) {
+      if (!Utils.isTabsPanel(panel)) continue
+
+      for (const end of ['bottom', 'top'] as const) {
+        const moves = Tabs.getHealMoves(panel.tabs.filter(t => t.lvl === 0))
+        const strays = end === 'bottom' ? moves.toBottom : moves.toTop
+        const anchor =
+          Tabs.byId[(end === 'bottom' ? moves.bottomAnchor : moves.topAnchor) ?? D.NOID]
+        if (!strays.length || !anchor) continue
+
+        // Target: right before the bottom anchor or right after the unit of the top anchor
+        let index = anchor.index
+        if (end === 'top') {
+          index++
+          while (Tabs.list[index] && Tabs.list[index].lvl > anchor.lvl) index++
+        }
+
+        // Strays with their branches, in their current order
+        const ids: ID[] = []
+        for (const id of strays) {
+          const tab = Tabs.byId[id]
+          if (tab) ids.push(tab.id, ...Tabs.getBranch(tab, false).map(t => t.id))
+        }
+
+        const src = { windowId: Windows.id, panelId: panel.id }
+        await Tabs.move(Tabs.getTabsInfo(ids), src, { panelId: panel.id, index, parentId: D.NOID })
+      }
+    }
+  } catch (err) {
+    Logs.err('Tabs.healLockedTabs: Cannot move stray tabs:', err)
+  }
+  healingLocks = false
+
+  lockAnchorsReady = true
+  Sidebar.recalcTabsPanels()
 }
 
 export function unload(): void {
   ready = false
+  lockAnchorsReady = false
   Tabs.resetTabsListeners()
   Tabs.cancelSavingTabData()
   Tabs.cancelCachingTabsData()
@@ -517,6 +572,8 @@ function restoreTab(
     tab.reactive.folded = tab.folded = !!props.folded
     if (props.customTitle) tab.customTitle = props.customTitle
     if (props.customColor) tab.reactive.customColor = tab.customColor = props.customColor
+    if (props.locked) tab.reactive.locked = tab.locked = true
+    if (props.locked && props.lockEnd) tab.lockEnd = props.lockEnd
   } else {
     Logs.warn(`Tabs.restoreTab: no props for: "${tab.id} i${tab.index} url${tab.url}"`)
   }
@@ -743,6 +800,8 @@ export function cacheTabsData(delay = 300): void {
       if (tab.cookieStoreId !== D.CONTAINER_ID) info.ctx = tab.cookieStoreId
       if (tab.customTitle) info.customTitle = tab.customTitle
       if (tab.customColor) info.customColor = tab.customColor
+      if (tab.locked) info.locked = true
+      if (tab.locked && tab.lockEnd) info.lockEnd = tab.lockEnd
       data.push(info)
     }
 
@@ -800,6 +859,8 @@ function _saveTabData(tabId: ID, forced?: boolean): void {
       data.folded === tab.folded &&
       data.panelId === tab.panelId &&
       data.customColor === tab.customColor &&
+      !data.locked === !tab.locked &&
+      data.lockEnd === tab.lockEnd &&
       data.customTitle === tab.customTitle
     ) {
       return
@@ -825,6 +886,9 @@ function _saveTabData(tabId: ID, forced?: boolean): void {
   else data.customTitle = undefined
   if (tab.customColor) data.customColor = tab.customColor
   else data.customColor = undefined
+  if (tab.locked) data.locked = true
+  else data.locked = undefined
+  data.lockEnd = tab.locked ? tab.lockEnd : undefined
 
   // Logs.info('Tabs.saveTabData: Saving...', tabId, { ...data })
   browser.sessions.setTabValue(tabId, 'data', data).catch(err => {
@@ -1112,6 +1176,9 @@ export function reloadTab(tab: T.Tab): void {
  * Discard tabs
  */
 export async function discardTabs(tabIds: ID[] = [], explicit = false): Promise<void> {
+  // Skip locked tabs on auto-unload
+  if (!explicit) tabIds = tabIds.filter(id => !Tabs.byId[id]?.locked)
+
   // Skip pinned tabs
   if (Settings.state.pinnedNoUnload && (!explicit || Settings.state.pinnedNoUnloadExplicit)) {
     tabIds = tabIds.filter(id => {
@@ -1349,8 +1416,9 @@ export function dedupeTabs(tabIds: ID[]): void {
     const tab = Tabs.byId[id]
     if (!tab) return
 
-    if (urls.includes(tab.url)) toRemove.push(tab.id)
-    else urls.push(tab.url)
+    if (urls.includes(tab.url)) {
+      if (!Tabs.isInLockedUnit(tab, Tabs.byId)) toRemove.push(tab.id)
+    } else urls.push(tab.url)
   }
 
   Tabs.removeTabs(toRemove)
@@ -1626,7 +1694,9 @@ export function autoDiscardFolded(rootTab: T.Tab) {
   if (!Settings.state.discardFolded) return
 
   if (Settings.state.discardFoldedDelay === 0) {
-    const childIds = Tabs.getBranch(rootTab, false).map(t => t.id)
+    const childIds = Tabs.getBranch(rootTab, false)
+      .filter(t => !t.locked)
+      .map(t => t.id)
     if (!childIds.length) return
 
     browser.tabs.discard(childIds)
@@ -1639,7 +1709,9 @@ export function autoDiscardFolded(rootTab: T.Tab) {
     rootTab.autoUnloadFoldedTimeout = setTimeout(() => {
       const parentTab = Tabs.byId[rootTab.id]
       if (parentTab?.isParent && parentTab.folded) {
-        const childIds = Tabs.getBranch(rootTab, false).map(t => t.id)
+        const childIds = Tabs.getBranch(rootTab, false)
+          .filter(t => !t.locked)
+          .map(t => t.id)
         if (!childIds.length) return
 
         browser.tabs.discard(childIds)

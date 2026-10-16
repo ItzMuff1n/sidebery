@@ -67,7 +67,7 @@ export function removeTabsAbove(tabIds?: ID[]): void {
   for (let i = startTab.index; i--;) {
     const tab = Tabs.list[i]
     if (!tab || tab.pinned || tab.panelId !== startTab.panelId) break
-    toRm.push(tab.id)
+    if (!Tabs.isInLockedUnit(tab, Tabs.byId)) toRm.push(tab.id)
   }
 
   removeTabs(toRm)
@@ -96,7 +96,7 @@ export function removeTabsBelow(tabIds?: ID[]): void {
   for (let i = startTab.index + 1; i < Tabs.list.length; i++) {
     const tab = Tabs.list[i]
     if (!tab || tab.panelId !== startTab.panelId) break
-    toRm.push(tab.id)
+    if (!Tabs.isInLockedUnit(tab, Tabs.byId)) toRm.push(tab.id)
   }
 
   removeTabs(toRm)
@@ -120,7 +120,7 @@ export function removeOtherTabs(tabIds?: ID[]): void {
   const panelTabs = panel.tabs
   const toRm = []
   for (const tab of panelTabs) {
-    if (!tabIds.includes(tab.id)) toRm.push(tab.id)
+    if (!tabIds.includes(tab.id) && !Tabs.isInLockedUnit(tab, Tabs.byId)) toRm.push(tab.id)
   }
 
   removeTabs(toRm)

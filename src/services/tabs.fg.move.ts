@@ -24,6 +24,14 @@ export async function move(
   src: T.SrcPlaceInfo,
   dst: T.DstPlaceInfo
 ): Promise<void> {
+  // Locked tabs (and the tabs that travel with them) can't be moved
+  const infoIds = new Set(tabsInfo.map(t => t.id))
+  tabsInfo = tabsInfo.filter(info => {
+    for (let t = Tabs.byId[info.id]; t; t = Tabs.byId[t.parentId]) {
+      if (t.locked && infoIds.has(t.id)) return false
+    }
+    return true
+  })
   if (!tabsInfo.length) return
 
   // Ask about target window
@@ -98,6 +106,24 @@ export async function move(
     const panel = Sidebar.panelsById[dst.panelId ?? NOID]
     if (!Utils.isTabsPanel(panel)) return Logs.warn('Tabs.move: No panel')
     dst.index = panel.nextTabIndex
+  }
+
+  // Keep tabs out of the locked end blocks, unless they are moved into a locked folder
+  if (
+    !Tabs.healingLocks &&
+    !dst.pinned &&
+    !Tabs.isInLockedUnit(Tabs.byId[dst.parentId], Tabs.byId)
+  ) {
+    const panelId =
+      dst.panelId ?? Tabs.list[dst.index]?.panelId ?? Tabs.byId[tabsInfo[0].id]?.panelId
+    const panel = Sidebar.panelsById[panelId ?? NOID]
+    if (Utils.isTabsPanel(panel)) {
+      const index = Tabs.clampToFree(dst.index, panel)
+      if (index !== dst.index) {
+        dst.index = index
+        dst.parentId = NOID
+      }
+    }
   }
 
   // Gather tabs by type (pinned/normal), get initial info

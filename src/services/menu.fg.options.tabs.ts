@@ -253,10 +253,18 @@ export const tabsMenuOptions: Record<string, () => MenuOption | MenuOption[] | u
     const selected = Selection.ids()
     const firstTab = Tabs.byId[selected[0]]
     if (!firstTab) return
+    // Natively pinned tab: keep the old behaviour so old pins can be converted
+    if (firstTab.pinned) {
+      return {
+        label: translate('menu.tab.unpin'),
+        icon: 'icon_pin',
+        onClick: () => Tabs.unpinTabs(selected),
+      }
+    }
     return {
-      label: translate('menu.tab.' + (firstTab.pinned ? 'unpin' : 'pin')),
+      label: translate('menu.tab.' + (firstTab.locked ? 'unpin' : 'pin')),
       icon: 'icon_pin',
-      onClick: firstTab.pinned ? () => Tabs.unpinTabs(selected) : () => Tabs.pinTabs(selected),
+      onClick: () => Tabs.toggleLocked(selected),
     }
   },
 
@@ -825,7 +833,7 @@ export const tabsMenuOptions: Record<string, () => MenuOption | MenuOption[] | u
     if (!Utils.isTabsPanel(panel)) return
 
     const tabs = panel.tabs ?? []
-    const tabIds = tabs.map(t => t.id)
+    const tabIds = tabs.filter(t => !Tabs.isInLockedUnit(t, Tabs.byId)).map(t => t.id)
     const option: MenuOption = {
       label: translate('menu.tabs_panel.close'),
       icon: 'icon_close',

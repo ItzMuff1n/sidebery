@@ -14,6 +14,7 @@
   :data-discarded="tab.reactive.discarded"
   :data-urgent-descendant="tab.reactive.hasUrgentDescendant"
   :data-lvl="tab.reactive.lvl"
+  :data-locked="tab.reactive.locked"
   :data-group="tab.reactive.isGroup"
   :data-parent="tab.reactive.isParent"
   :data-folded="tab.reactive.folded"
@@ -85,6 +86,7 @@
             @blur="onCustomTitleBlur"
             @keydown="onCustomTitlteKD")
         .title(ref="titleEl") {{tab.customTitle ?? tab.title}}
+    svg.lock-icon(v-if="tab.reactive.locked && !iconOnly"): use(href="#icon_pin")
     .close(
       v-if="!iconOnly && Settings.state.tabRmBtn !== 'none'"
       draggable="true"
@@ -367,7 +369,7 @@ function onMouseDown(e: MouseEvent): void {
       }
     }
 
-    if (tab.pinned) {
+    if (tab.pinned || tab.locked) {
       if (Settings.state.tabPinnedMiddleClick === 'discard') {
         Tabs.discardTabs(selectedTabs, true)
         return
@@ -382,9 +384,11 @@ function onMouseDown(e: MouseEvent): void {
         Tabs.duplicateTabs([tab.id])
         return
       } else if (Settings.state.tabPinnedMiddleClick === 'unpin') {
-        Tabs.unpinTabs([tab.id])
+        if (tab.locked) Tabs.setLocked([tab.id], false)
+        else Tabs.unpinTabs([tab.id])
         return
       }
+      if (tab.locked) return
     }
 
     if (Settings.state.multipleMiddleClose && Settings.state.tabMiddleClick === 'close') {
@@ -430,7 +434,7 @@ function longClickFeedback(e: MouseEvent) {
   else if (action === 'discard') Tabs.discardTabs([tab.id], true)
   else if (action === 'duplicate') Tabs.duplicateTabs([tab.id])
   else if (action === 'dup_child') Tabs.duplicateTabs([tab.id], true)
-  else if (action === 'pin') Tabs.repinTabs([tab.id])
+  else if (action === 'pin') pinAction()
   else if (action === 'mute') Tabs.remuteTabs([tab.id])
   else if (action === 'clear_cookies') Tabs.clearTabsCookies([tab.id])
   else if (action === 'new_after') Tabs.createTabAfter(tab.id)
@@ -472,6 +476,7 @@ function onMouseUp(e: MouseEvent): void {
 
     if (
       tab.pinned ||
+      tab.locked ||
       (e.ctrlKey && Settings.state.tabMiddleClickCtrl !== 'none') ||
       (e.shiftKey && Settings.state.tabMiddleClickShift !== 'none')
     ) {
@@ -486,7 +491,8 @@ function onMouseUp(e: MouseEvent): void {
       if (Selection.isSet()) {
         let selectedTabs = Selection.ids()
         if (selectedTabs.length === 1 && preselectedTabs?.length) selectedTabs = preselectedTabs
-        Tabs.removeTabs(selectedTabs)
+        // Locked tabs are not closed by the multiple middle close
+        Tabs.removeTabs(selectedTabs.filter(id => !Tabs.byId[id]?.locked))
       } else {
         Tabs.removeTabs([tab.id])
       }
@@ -548,7 +554,7 @@ function onDoubleClick(): void {
   if (dc === 'reload') Tabs.reloadTabs([tab.id])
   else if (dc === 'duplicate') Tabs.duplicateTabs([tab.id])
   else if (dc === 'dup_child') Tabs.duplicateTabs([tab.id], true)
-  else if (dc === 'pin') Tabs.repinTabs([tab.id])
+  else if (dc === 'pin') pinAction()
   else if (dc === 'mute') Tabs.remuteTabs([tab.id])
   else if (dc === 'clear_cookies') Tabs.clearTabsCookies([tab.id])
   else if (dc === 'exp' && tab.isParent) Tabs.toggleBranch(tab.id)
@@ -563,6 +569,12 @@ function onDoubleClick(): void {
 function onDragStart(e: DragEvent): void {
   if (Mouse.isLocked()) {
     Mouse.resetClickLock()
+    e.stopPropagation()
+    e.preventDefault()
+    return
+  }
+  // Locked tabs can't be dragged
+  if (tab.locked) {
     e.stopPropagation()
     e.preventDefault()
     return
@@ -589,6 +601,7 @@ function onDragStart(e: DragEvent): void {
   const urlTitleList = []
   for (const tab of Tabs.list) {
     const inBranch = Settings.state.tabsTree && !pinned && toDrag.includes(tab.parentId)
+    if (tab.locked) continue
     if (inBranch || Selection.includes(tab.id)) {
       uriList.push(tab.url)
       links.push(`<a href="${tab.url}>${tab.title}</a>`)
@@ -707,6 +720,12 @@ function updateTooltipDebounced() {
   updateTooltipDebouncedTimeout = setTimeout(() => {
     Tabs.updateTooltip(tab.id)
   }, Settings.state.updTooltipDelay)
+}
+
+function pinAction(): void {
+  // Natively pinned tabs keep the old behaviour so they can be converted
+  if (tab.pinned) Tabs.repinTabs([tab.id])
+  else Tabs.toggleLocked([tab.id])
 }
 
 function discardOrCloseTabs(selectedTabs: ID[]): void {

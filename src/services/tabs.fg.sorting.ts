@@ -188,7 +188,8 @@ function getSiblings(id: ID): ID[] | undefined {
 
 function getSortingChunks(ids: ID[]): ID[][] {
   const groups: ID[][] = []
-  const parentIndexes: Partial<Record<ID, number>> = {}
+  const parentIndexes: Partial<Record<string, number>> = {}
+  const lockedCount: Partial<Record<ID, number>> = {}
 
   for (const id of ids) {
     const tab = Tabs.byId[id]
@@ -197,10 +198,17 @@ function getSortingChunks(ids: ID[]): ID[][] {
     // Immediately return pinned tabs group
     if (tab.pinned) return [ids]
 
-    let index = parentIndexes[tab.parentId]
+    // Locked tabs stay still and split their siblings into separate chunks
+    if (tab.locked) {
+      lockedCount[tab.parentId] = (lockedCount[tab.parentId] ?? 0) + 1
+      continue
+    }
+
+    const key = `${tab.parentId}:${lockedCount[tab.parentId] ?? 0}`
+    let index = parentIndexes[key]
     if (index === undefined) {
       index = groups.push([id]) - 1
-      parentIndexes[tab.parentId] = index
+      parentIndexes[key] = index
     } else {
       groups[index].push(id)
     }

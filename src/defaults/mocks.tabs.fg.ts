@@ -34,6 +34,8 @@ export class MTab implements Tab {
   reopenInContainer?: string | undefined
   customTitle?: string | undefined
   customColor?: string | undefined
+  locked?: boolean | undefined
+  lockEnd?: 'top' | 'bottom' | undefined
   moving?: boolean | undefined
   previewImg?: string | undefined
   removing?: boolean | undefined
@@ -67,6 +69,7 @@ export class MTab implements Tab {
     color: null,
     branchColor: null,
     customColor: null,
+    locked: false,
     isGroup: false,
   }
   sessionData?: TabSessionData | undefined

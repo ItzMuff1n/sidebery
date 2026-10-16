@@ -789,6 +789,23 @@
   display: none
 
 // ---
+// -- Lock icon (locked in place)
+// -
+.Tab .lock-icon
+  position: absolute
+  top: calc(50% - 6px)
+  right: 30px
+  width: 12px
+  height: 12px
+  fill: var(--tabs-normal-fg)
+  opacity: .45
+  pointer-events: none
+  z-index: 19
+
+.Tab[data-active="true"] .lock-icon
+  fill: var(--tabs-activated-fg)
+
+// ---
 // -- Container highlight
 // -
 .Tab .ctx

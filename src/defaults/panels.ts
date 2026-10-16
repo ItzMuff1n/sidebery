@@ -84,6 +84,8 @@ export const TABS_PANEL_STATE: T.TabsPanel = {
   startTabIndex: -1,
   endTabIndex: -1,
   nextTabIndex: -1,
+  freeStartIndex: -1,
+  freeNextIndex: -1,
   scrollRetainer: 0,
   allDiscarded: false,
   ntbbEl: null,

@@ -37,6 +37,8 @@ export interface Tab extends NativeTab {
   reopenInContainer?: string
   customTitle?: string
   customColor?: string
+  locked?: boolean
+  lockEnd?: 'top' | 'bottom'
   moving?: boolean
   removing?: boolean
   flashAnimationTimeout?: number
@@ -88,6 +90,7 @@ export interface ReactiveTabProps {
   color: string | null
   branchColor: string | null
   customColor: string | null
+  locked: boolean
   isGroup: boolean
 }
 
@@ -123,6 +126,8 @@ export interface TabCache {
   uniqWinId?: ID /* only for the first tab of window */
   customTitle?: string
   customColor?: string
+  locked?: boolean
+  lockEnd?: 'top' | 'bottom'
 
   index?: number
   isMissedGroup?: boolean
@@ -135,6 +140,8 @@ export interface TabSessionData {
   folded: boolean
   customTitle?: string
   customColor?: string
+  locked?: boolean
+  lockEnd?: 'top' | 'bottom'
 }
 
 export interface ActiveTabsHistory {
@@ -279,6 +286,8 @@ export interface RemovedTabInfo {
   children?: ID[]
   customTitle?: string
   customColor?: string
+  locked?: boolean
+  lockEnd?: 'top' | 'bottom'
 }
 
 export interface RecentlyClosedTabInfo {

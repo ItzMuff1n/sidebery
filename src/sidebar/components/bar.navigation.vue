@@ -491,7 +491,7 @@ async function onNavMouseDown(e: MouseEvent, item: T.NavItem) {
 
       // Remove tabs
       if (Settings.state.navTabsPanelMidClickAction === 'rm_all') {
-        let toRemove = panel.tabs.map(t => t.id)
+        let toRemove = panel.tabs.filter(t => !Tabs.isInLockedUnit(t, Tabs.byId)).map(t => t.id)
         if (Settings.state.pinnedTabsPosition === 'panel') {
           panel.pinnedTabs.forEach(t => toRemove.push(t.id))
         }

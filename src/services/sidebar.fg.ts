@@ -23,6 +23,7 @@ import * as Popups from 'src/services/popups.fg'
 import { turnOffBeforeRequestHandler, turnOnBeforeRequestHandler } from 'src/services/web-req.fg'
 import * as SidebarConf from 'src/services/sidebar-config'
 import * as Sync from 'src/services/sync.fg'
+import { getLockedBounds } from 'src/services/tabs.fg.lock'
 
 export interface SidebarReactiveState {
   nav: ID[]
@@ -474,12 +475,33 @@ export function recalcTabsPanels(reset?: boolean): void {
       panel.startTabIndex = startIndex
       panel.endTabIndex = startIndex + tabsCount - 1
       panel.nextTabIndex = panel.endTabIndex + 1
+      const free = getLockedBounds(panel.tabs, panel.startTabIndex, panel.nextTabIndex)
+      panel.freeStartIndex = free.freeStart
+      panel.freeNextIndex = free.freeNext
+
+      // Remember on which end locked tabs are anchored (to heal strays at the next load)
+      if (Tabs.lockAnchorsReady) {
+        let anchorsChanged = false
+        for (const t of panel.tabs) {
+          if (t.lvl !== 0) continue
+          let end: 'top' | 'bottom' | undefined
+          if (t.locked)
+            end = t.index < free.freeStart ? 'top' : t.index >= free.freeNext ? 'bottom' : undefined
+          if (t.lockEnd === end) continue
+          t.lockEnd = end
+          anchorsChanged = true
+          Tabs.saveTabData(t.id)
+        }
+        if (anchorsChanged) Tabs.cacheTabsData()
+      }
     } else {
       panel.reactive.len = panel.pinnedTabs.length
       panel.reactive.empty = panel.pinnedTabs.length === 0
       panel.startTabIndex = tabIndex
       panel.endTabIndex = tabIndex
       panel.nextTabIndex = tabIndex
+      panel.freeStartIndex = tabIndex
+      panel.freeNextIndex = tabIndex
     }
 
     if (pinnedTabsOfPanel?.length || tabsCount) {

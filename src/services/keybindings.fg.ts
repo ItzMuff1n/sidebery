@@ -1527,7 +1527,7 @@ function onKeyPinTabs() {
   if (!firstTab) return
 
   if (firstTab.pinned) Tabs.unpinTabs(ids)
-  else Tabs.pinTabs(ids)
+  else Tabs.toggleLocked(ids)
 }
 
 function onKeyHidePanel() {

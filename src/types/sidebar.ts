@@ -136,6 +136,8 @@ export interface TabsPanel extends PanelCommonProps, TabsPanelConfig {
   startTabIndex: number
   endTabIndex: number
   nextTabIndex: number
+  freeStartIndex: number
+  freeNextIndex: number
   scrollRetainer: number
   allDiscarded: boolean
   ntbbEl: HTMLElement | null

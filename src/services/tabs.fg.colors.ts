@@ -3,6 +3,7 @@ import * as Utils from 'src/utils'
 import * as Containers from 'src/services/containers'
 import * as Settings from 'src/services/settings'
 import * as Tabs from 'src/services/tabs.fg'
+import * as Sidebar from 'src/services/sidebar.fg'
 
 const CONTAINER_COLORS: Record<string, string> = {
   blue: '#37adff',
@@ -117,4 +118,31 @@ export function setCustomColor(tabIds: ID[], color: string): void {
   }
 
   Tabs.cacheTabsData()
+}
+
+/**
+ * Lock tabs in place (Sidebery-only flag, not a Firefox pin)
+ */
+export function setLocked(tabIds: ID[], locked: boolean): void {
+  for (const id of tabIds) {
+    const tab = Tabs.byId[id]
+    if (!tab) continue
+
+    tab.locked = locked || undefined
+    tab.reactive.locked = locked
+    if (!locked) tab.lockEnd = undefined
+
+    Tabs.saveTabData(tab.id)
+  }
+
+  Tabs.cacheTabsData()
+  Sidebar.recalcTabsPanels()
+}
+
+/**
+ * Lock/unlock tabs depending on the state of the first one
+ */
+export function toggleLocked(tabIds: ID[]): void {
+  const first = Tabs.byId[tabIds[0]]
+  if (first) setLocked(tabIds, !first.locked)
 }
