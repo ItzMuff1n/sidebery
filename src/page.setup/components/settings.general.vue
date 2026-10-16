@@ -52,6 +52,25 @@ section(ref="el")
       :inactive="!browserUI || !Settings.state.autohide"
       :or="0"
       @update:value="Settings.saveDebounced(500)")
+    SelectField(
+      label="settings.autohide_anim"
+      optLabel="settings.autohide_anim_"
+      v-model:value="Settings.state.autohideAnim"
+      dbg="autohideAnim"
+      :default="DEFAULT_SETTINGS.autohideAnim"
+      :inactive="!browserUI || !Settings.state.autohide"
+      :opts="Settings.getOpts('autohideAnim')"
+      @update:value="Settings.saveDebounced(150)")
+    SelectField(
+      label="settings.autohide_top"
+      optLabel="settings.autohide_top_"
+      v-model:value="Settings.state.autohideTop"
+      dbg="autohideTop"
+      :default="DEFAULT_SETTINGS.autohideTop"
+      :inactive="!browserUI || !Settings.state.autohide"
+      :opts="Settings.getOpts('autohideTop')"
+      :note="translate('settings.autohide_top_note')"
+      @update:value="Settings.saveDebounced(150)")
   ToggleField(
     label="settings.native_scrollbars"
     dbg="nativeScrollbars"

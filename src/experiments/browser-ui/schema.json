@@ -48,6 +48,16 @@
               "buffer": {
                 "type": "integer",
                 "optional": true
+              },
+              "anim": {
+                "type": "string",
+                "enum": ["slide", "smooth", "snappy", "fade"],
+                "optional": true
+              },
+              "top": {
+                "type": "string",
+                "enum": ["overlap", "below", "follow"],
+                "optional": true
               }
             }
           }

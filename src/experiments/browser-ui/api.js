@@ -168,11 +168,45 @@ this.browserUI = class extends ExtensionAPI {
     })
     mo.observe(box, { attributes: true, attributeFilter: ['hidden', 'sidebarcommand'] })
 
+    // Top edge vs an auto-hidden toolbox (position: fixed, from userChrome.css):
+    // "overlap" ignores it, "below" always leaves room for it, "follow" moves with it, using the
+    // timing of the toolbox's own opacity transition, whatever made it show or hide.
+    const toolbox = doc.getElementById('navigator-toolbox')
+    let toolboxH = 0
+    let toolboxShown = false
+    const setTop = (dur = 0, ease = 'linear', delay = 0) => {
+      const fixed = win.getComputedStyle(toolbox).position === 'fixed'
+      const mode = this.conf.top
+      const room = fixed && (mode === 'below' || (mode === 'follow' && toolboxShown))
+      box.style.setProperty('--sidebery-ah-top', `${room ? toolboxH : 0}px`)
+      box.style.setProperty('--sidebery-ah-top-dur', `${dur}ms`)
+      box.style.setProperty('--sidebery-ah-top-ease', ease)
+      box.style.setProperty('--sidebery-ah-top-delay', `${delay}ms`)
+    }
+    // Layout height, not affected by the toolbox's rotate transform; includes the menu bar when it is on
+    const ro = new win.ResizeObserver(entries => {
+      toolboxH = Math.round(entries[0].borderBoxSize[0].blockSize)
+      setTop()
+    })
+    ro.observe(toolbox)
+    const onToolboxTransition = e => {
+      if (e.target !== toolbox || e.propertyName !== 'opacity' || this.conf.top !== 'follow') return
+      const anim = toolbox.getAnimations().find(a => a.transitionProperty === 'opacity')
+      if (!anim) return
+      const frames = anim.effect.getKeyframes()
+      toolboxShown = parseFloat(frames[frames.length - 1].opacity) > 0.5
+      const t = anim.effect.getTiming()
+      setTop(t.duration, t.easing, t.delay)
+    }
+    toolbox.addEventListener('transitionrun', onToolboxTransition)
+
     // Settings
     const update = () => {
       box.style.setProperty('--sidebery-ah-width', `${this.conf.width}px`)
       box.style.setProperty('--sidebery-ah-pull-out', `${this.conf.pullOut}ms`)
       box.style.setProperty('--sidebery-ah-pull-in', `${this.conf.pullIn}ms`)
+      box.setAttribute('sidebery-anim', this.conf.anim)
+      setTop()
     }
     update()
     sync()
@@ -235,10 +269,13 @@ this.browserUI = class extends ExtensionAPI {
       box.removeEventListener('mouseleave', onLeave)
       doc.removeEventListener('popupshown', onPopupShown, true)
       doc.removeEventListener('popuphidden', onPopupHidden, true)
+      ro.disconnect()
+      toolbox.removeEventListener('transitionrun', onToolboxTransition)
       box.removeAttribute('sidebery-autohide')
       box.removeAttribute('sidebery-open')
-      for (const p of ['--sidebery-ah-width', '--sidebery-ah-pull-out', '--sidebery-ah-pull-in']) {
-        box.style.removeProperty(p)
+      box.removeAttribute('sidebery-anim')
+      for (const p of ['width', 'pull-out', 'pull-in', 'top', 'top-dur', 'top-ease', 'top-delay']) {
+        box.style.removeProperty(`--sidebery-ah-${p}`)
       }
       try {
         utils.removeSheetUsingURIString(this.sheet, utils.USER_SHEET)

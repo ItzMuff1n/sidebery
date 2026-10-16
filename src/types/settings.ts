@@ -11,6 +11,8 @@ export interface SettingsState {
   autohidePullOut: number
   autohidePullIn: number
   autohideBuffer: number
+  autohideAnim: (typeof SETTINGS_OPTIONS.autohideAnim)[number]
+  autohideTop: (typeof SETTINGS_OPTIONS.autohideTop)[number]
   selWinScreenshots: boolean
   updateSidebarTitle: boolean
   markWindow: boolean

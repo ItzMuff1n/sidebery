@@ -1108,6 +1108,18 @@ Liste de “sous-chaines” ou “/RegExp/” avec une entrée par ligne:
   'settings.autohide_buffer': {
     en: 'Stay open after the pointer leaves (ms)',
   },
+  'settings.autohide_anim': { en: 'Slide animation' },
+  'settings.autohide_anim_slide': { en: 'linear' },
+  'settings.autohide_anim_smooth': { en: 'smooth' },
+  'settings.autohide_anim_snappy': { en: 'snappy' },
+  'settings.autohide_anim_fade': { en: 'fade' },
+  'settings.autohide_top': { en: 'Auto-hidden toolbar' },
+  'settings.autohide_top_overlap': { en: 'overlaps' },
+  'settings.autohide_top_below': { en: 'leave room' },
+  'settings.autohide_top_follow': { en: 'push down' },
+  'settings.autohide_top_note': {
+    en: 'For a toolbar hidden by userChrome.css. Leave room: the sidebar always starts below it. Push down: the sidebar moves down while the toolbar shows.',
+  },
   'settings.native_scrollbars': {
     en: 'Use native scroll-bars',
     de: 'Nativen Scroll-Balken verwenden',

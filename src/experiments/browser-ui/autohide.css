@@ -38,31 +38,27 @@
   }
 }
 
-/* The panel: full width, background and a 1px divider on its inner edge */
+/* The panel: full width, background and a 1px divider on its inner edge.
+ * The sidebar header (panel switcher, close button) is hidden: Sidebery's own buttons and keybindings cover it.
+ * Top: api.js sets --sidebery-ah-top to keep the panel below an auto-hidden toolbox (userChrome), either always
+ * ("below") or only while the toolbox is shown, with the toolbox's own transition timing ("follow").
+ * Only the top edge moves, so the content is pushed down and the bottom stays in place. */
 #sidebar-box[sidebery-autohide] {
-  > #sidebar-header,
+  > #sidebar-header {
+    display: none !important;
+  }
   #sidebar {
     min-width: var(--sidebery-ah-width) !important;
+    margin-top: var(--sidebery-ah-top, 0px) !important;
     background-color: inherit !important;
     direction: ltr;
     border-inline: 1px solid rgb(80, 80, 80);
     border-inline-width: 0 1px;
-    transition: none !important;
+    transition: margin-top var(--sidebery-ah-top-dur, 0ms) var(--sidebery-ah-top-ease, linear)
+      var(--sidebery-ah-top-delay, 0ms) !important;
   }
-  &:is([positionend], [sidebar-positionend]) > #sidebar-header,
   &:is([positionend], [sidebar-positionend]) #sidebar {
     border-inline-width: 1px 0;
-  }
-  > #sidebar-header {
-    overflow: hidden;
-    padding-inline: 0 !important;
-    color: var(--chrome-color, inherit) !important;
-    &::before,
-    &::after {
-      content: '';
-      display: flex;
-      padding-left: 8px;
-    }
   }
   .sidebar-browser-stack {
     background: inherit;
@@ -73,7 +69,7 @@
 #sidebar-box[sidebery-autohide]::before {
   content: '';
   position: absolute;
-  top: 0;
+  top: var(--sidebery-ah-top, 0px);
   bottom: 0;
   left: 0;
   width: var(--sidebery-ah-trigger);
@@ -85,7 +81,7 @@
 #sidebar-box[sidebery-autohide]::after {
   content: '';
   position: absolute;
-  top: 0;
+  top: var(--sidebery-ah-top, 0px);
   bottom: 0;
   left: 0;
   width: var(--sidebery-ah-width);
@@ -103,19 +99,44 @@
   }
 }
 
-/* Slide */
-#sidebar-box[sidebery-autohide] > :is(#sidebar-header, .sidebar-browser-stack, #sidebery-resizer) {
+/* Slide. The animation style ([sidebery-anim], set by api.js) picks the easing of the slide-out (open)
+ * and slide-in (close), and whether the panel fades. */
+#sidebar-box[sidebery-autohide] {
+  --sidebery-ah-ease-open: linear;
+  --sidebery-ah-ease-close: linear;
+  --sidebery-ah-closed-opacity: 1;
+  /* fast start, long soft landing */
+  &[sidebery-anim='smooth'],
+  &[sidebery-anim='fade'] {
+    --sidebery-ah-ease-open: cubic-bezier(0.22, 1, 0.36, 1);
+    --sidebery-ah-ease-close: cubic-bezier(0.64, 0, 0.78, 0);
+  }
+  /* almost all of the travel in the first frames */
+  &[sidebery-anim='snappy'] {
+    --sidebery-ah-ease-open: cubic-bezier(0.05, 0.9, 0.1, 1);
+    --sidebery-ah-ease-close: cubic-bezier(0.9, 0, 0.95, 0.1);
+  }
+  &[sidebery-anim='fade'] {
+    --sidebery-ah-closed-opacity: 0;
+  }
+}
+#sidebar-box[sidebery-autohide] > :is(.sidebar-browser-stack, #sidebery-resizer) {
   transform: translateX(calc(-1 * var(--sidebery-ah-width)));
-  transition: transform var(--sidebery-ah-pull-in) linear !important;
+  opacity: var(--sidebery-ah-closed-opacity);
+  transition:
+    transform var(--sidebery-ah-pull-in) var(--sidebery-ah-ease-close),
+    opacity var(--sidebery-ah-pull-in) var(--sidebery-ah-ease-close) !important;
 }
 #sidebar-box[sidebery-autohide]:is([positionend], [sidebar-positionend])
-  > :is(#sidebar-header, .sidebar-browser-stack, #sidebery-resizer) {
+  > :is(.sidebar-browser-stack, #sidebery-resizer) {
   transform: translateX(var(--sidebery-ah-width));
 }
-#sidebar-box[sidebery-autohide][sidebery-open]
-  > :is(#sidebar-header, .sidebar-browser-stack, #sidebery-resizer) {
+#sidebar-box[sidebery-autohide][sidebery-open] > :is(.sidebar-browser-stack, #sidebery-resizer) {
   transform: none;
-  transition-duration: var(--sidebery-ah-pull-out) !important;
+  opacity: 1;
+  transition:
+    transform var(--sidebery-ah-pull-out) var(--sidebery-ah-ease-open),
+    opacity var(--sidebery-ah-pull-out) var(--sidebery-ah-ease-open) !important;
 }
 
 /* Resize handle (created by api.js): 8px on the inner edge of the panel, grabbable only while open */
@@ -125,7 +146,7 @@
 #sidebar-box[sidebery-autohide] > #sidebery-resizer {
   display: block;
   position: absolute;
-  top: 0;
+  top: var(--sidebery-ah-top, 0px);
   bottom: 0;
   left: calc(var(--sidebery-ah-width) - 4px);
   width: 8px;

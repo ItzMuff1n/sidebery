@@ -19,6 +19,8 @@ interface AutohideConf {
   pullOut?: number
   pullIn?: number
   buffer?: number
+  anim?: string
+  top?: string
 }
 interface BrowserUIAPI {
   getSidebarSide(): Promise<Side>
@@ -82,6 +84,8 @@ export function apply(): void {
     conf.pullOut = toInt(s.autohidePullOut, DEFAULT_SETTINGS.autohidePullOut)
     conf.pullIn = toInt(s.autohidePullIn, DEFAULT_SETTINGS.autohidePullIn)
     conf.buffer = toInt(s.autohideBuffer, DEFAULT_SETTINGS.autohideBuffer)
+    conf.anim = s.autohideAnim
+    conf.top = s.autohideTop
   }
   const json = JSON.stringify(conf)
   if (json === appliedAutohide) return
