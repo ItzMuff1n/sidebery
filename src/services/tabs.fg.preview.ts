@@ -279,7 +279,8 @@ function getPPreviewInitData(tabId: ID, y?: number): TabPreviewInitData {
     popupWidth: Settings.state.previewTabsPopupWidth,
     offsetY: Settings.state.previewTabsInPageOffsetY,
     offsetX: Settings.state.previewTabsInPageOffsetX,
-    atTheLeft: Settings.state.previewTabsSide === 'right',
+    atTheLeft:
+      (Settings.state.previewTabsSide === 'right') !== (Settings.state.sidebarSide === 'right'),
     rCrop: Settings.state.previewTabsCropRight,
     tMax: Settings.state.previewTabsTitle,
     uMax: Settings.state.previewTabsUrl,

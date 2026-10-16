@@ -225,6 +225,17 @@ export function resetThemeSrcVars(): void {
   }
 }
 
+/**
+ * Mirror the layout when the sidebar is placed at the right side.
+ * Mirrored styles are scoped to html[data-sidebar-side="right"] (see build/styles.js).
+ */
+export function updateSidebarSide(): void {
+  document.documentElement.setAttribute(
+    'data-sidebar-side',
+    Settings.state.sidebarSide === 'right' ? 'right' : 'left'
+  )
+}
+
 export function updateGlobalFontSize(): void {
   const htmlEl = document.documentElement
   if (Settings.state.fontSize === 'xxs') htmlEl.style.fontSize = '14.5px'

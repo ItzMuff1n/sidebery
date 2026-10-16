@@ -5,6 +5,7 @@ export interface SettingsState {
   nativeScrollbars: boolean
   nativeScrollbarsThin: boolean
   nativeScrollbarsLeft: boolean
+  sidebarSide: (typeof SETTINGS_OPTIONS.sidebarSide)[number]
   selWinScreenshots: boolean
   updateSidebarTitle: boolean
   markWindow: boolean

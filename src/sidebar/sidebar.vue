@@ -315,7 +315,7 @@ const onWheel = Mouse.getWheelDebouncer(E.WheelDirection.Horizontal, e => {
   else return
 
   if (Settings.state.hScrollAction === 'switch_panels') {
-    const dir = e.deltaX > 0 ? 1 : -1
+    const dir = e.deltaX > 0 !== (Settings.state.sidebarSide === 'right') ? 1 : -1
 
     // Restart debouncer if direction is the same
     const restartDebouncer =

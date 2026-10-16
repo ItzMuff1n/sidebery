@@ -3,6 +3,9 @@ import fs from 'fs'
 import path from 'path'
 import stylus from 'stylus'
 import esbuild from 'esbuild'
+import postcss from 'postcss'
+import rtlcss from 'postcss-rtlcss'
+import { Mode, Source } from 'postcss-rtlcss/options'
 import { IS_DEV, ADDON_PATH, getTime, watch, log, logOk } from './utils.js'
 
 const OUTPUT_DIR = `${ADDON_PATH}/styles`
@@ -15,6 +18,47 @@ const ENTRIES = [
   './src/styles/popup.sync/sync.styl',
   './src/styles/popup.panel-config/panel-config.styl',
 ]
+
+// Stylesheets that get mirrored overrides for the sidebar placed at the right side.
+// The overrides are generated from the (left side) source rules and are scoped to
+// html[data-sidebar-side="right"]. Original rules are left untouched.
+const MIRRORED_OUTPUTS = new Set(['sidebar.css'])
+const MIRROR_ATTR = 'data-sidebar-side'
+
+// Rules that are physical by design, flipping must not touch them
+const KEEP_PHYSICAL = [/native-scrollbars-left/]
+
+/**
+ * Mark rules to be skipped by the flipping (rtlcss ignore directive)
+ */
+const keepPhysical = () => ({
+  postcssPlugin: 'sidebery-keep-physical',
+  Once(root) {
+    root.walkRules(rule => {
+      if (!KEEP_PHYSICAL.some(re => re.test(rule.selector))) return
+      rule.before(postcss.comment({ text: 'rtl:ignore' }))
+    })
+  },
+})
+keepPhysical.postcss = true
+
+/**
+ * Generate mirrored overrides
+ */
+async function mirror(css) {
+  const result = await postcss([
+    keepPhysical(),
+    rtlcss({
+      mode: Mode.override,
+      source: Source.ltr,
+      rtlPrefix: `[${MIRROR_ATTR}="right"]`,
+      processUrls: false,
+      useCalc: true,
+      processKeyFrames: true,
+    }),
+  ]).process(css, { from: undefined })
+  return result.css
+}
 
 /**
  * Build
@@ -95,11 +139,17 @@ async function compile(srcPath, outputPath, srcContent) {
       stylus(srcContent)
         .set('paths', [path.dirname(srcPath)])
         .render(async (err, css) => {
-          if (!IS_DEV) {
-            const { code } = await esbuild.transform(css, { minify: true, loader: 'css' })
-            css = code
+          try {
+            if (err) throw err
+            if (MIRRORED_OUTPUTS.has(path.basename(outputPath))) css = await mirror(css)
+            if (!IS_DEV) {
+              const { code } = await esbuild.transform(css, { minify: true, loader: 'css' })
+              css = code
+            }
+            res(fs.promises.writeFile(outputPath, css))
+          } catch (err) {
+            rej(err)
           }
-          res(fs.promises.writeFile(outputPath, css))
         })
     } catch (err) {
       console.log(`${getTime()} Styles: Cannot build ${srcPath}`, err)

@@ -2,6 +2,15 @@
 section(ref="el")
   h2 {{translate('settings.general_title')}}
   span.header-shadow
+  SelectField(
+    label="settings.sidebar_side"
+    optLabel="settings.sidebar_side_"
+    v-model:value="Settings.state.sidebarSide"
+    dbg="sidebarSide"
+    :default="DEFAULT_SETTINGS.sidebarSide"
+    :opts="Settings.getOpts('sidebarSide')"
+    :note="translate('settings.sidebar_side_note')"
+    @update:value="Settings.saveDebounced(150)")
   ToggleField(
     label="settings.native_scrollbars"
     dbg="nativeScrollbars"
@@ -89,6 +98,7 @@ import { DEFAULT_SETTINGS } from 'src/defaults'
 import * as Settings from 'src/services/settings.fg'
 import * as SetupPage from 'src/services/setup-page.fg'
 import ToggleField from '../../components/toggle-field.vue'
+import SelectField from '../../components/select-field.vue'
 import TextField from '../../components/text-field.vue'
 import * as Permissions from 'src/services/permissions.fg'
 

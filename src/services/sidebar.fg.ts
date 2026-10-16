@@ -696,7 +696,14 @@ export function updateBounds(): void {
 
   const panelContentEl = panel.scrollComponent?.getScrollableBox()
   DnD.setActivePointer(panel.id)
-  DnD.updatePointerLeftPosition(panelContentEl?.offsetLeft ?? 0)
+  let pointerStart = panelContentEl?.offsetLeft ?? 0
+  if (Settings.state.sidebarSide === 'right' && panelContentEl) {
+    // Mirrored: levels start at the right edge of the scrollable box
+    const boxEl = panelContentEl.offsetParent as HTMLElement | null
+    if (boxEl)
+      pointerStart = boxEl.offsetWidth - panelContentEl.offsetLeft - panelContentEl.offsetWidth
+  }
+  DnD.updatePointerLeftPosition(pointerStart)
 
   const pb = panel.scrollEl.getBoundingClientRect()
   const bb = panelsBoxEl.getBoundingClientRect()
@@ -1490,7 +1497,10 @@ export function openHiddenPanelsPopup(): void {
 
   // Horizontal
   if (Settings.state.navBarLayout === 'horizontal') {
-    let relLeft = btnRect.left - navRect.left
+    let relLeft =
+      Settings.state.sidebarSide === 'right'
+        ? navRect.right - btnRect.right
+        : btnRect.left - navRect.left
     if (relLeft < navRect.width / 2) {
       if (relLeft === 0) relLeft = 1
       if (width < 200) relLeft /= 2

@@ -818,10 +818,13 @@ export function onDragMove(e: DragEvent): void {
   const bounds = panel.bounds
   const scroll = panel.scrollEl.scrollTop ?? 0
   const panelTopOffset = panel.topOffset ?? 0
+  const panelLeftOffset = panel.leftOffset ?? 0
   const panelRightOffset = panel.rightOffset ?? 0
   const panelBottomOffset = panel.bottomOffset ?? 0
+  const mirrored = Settings.state.sidebarSide === 'right'
   const y = e.clientY - panelTopOffset + scroll
-  const x = e.clientX - (panel.leftOffset ?? 0)
+  // Distance from the edge where the tree levels start
+  const x = mirrored ? panelRightOffset - e.clientX : e.clientX - panelLeftOffset
 
   // Hide pointer if cursor out of drop area
   if (!yLock && (e.clientY < panelTopOffset || e.clientY > panelBottomOffset)) {
@@ -841,14 +844,14 @@ export function onDragMove(e: DragEvent): void {
       DnD.reactive.pointerMode = DndPointerMode.Between
     }
   }
-  if (!xLock && (x < 0 || e.clientX > panelRightOffset)) {
+  if (!xLock && (e.clientX < panelLeftOffset || e.clientX > panelRightOffset)) {
     DnD.reactive.pointerMode = DndPointerMode.None
     xLock = true
     return
   }
   if (
     xLock &&
-    x > 0 &&
+    e.clientX > panelLeftOffset &&
     e.clientX < panelRightOffset &&
     DnD.reactive.pointerMode === DndPointerMode.None
   ) {
@@ -861,7 +864,7 @@ export function onDragMove(e: DragEvent): void {
 
   if (xLock || yLock) return
 
-  dropLvlOffset = ~~((e.clientX - DnD.startX) / 12)
+  dropLvlOffset = ~~((mirrored ? DnD.startX - e.clientX : e.clientX - DnD.startX) / 12)
   const lvlChanged = prevDropLvlOffset !== dropLvlOffset
   prevDropLvlOffset = dropLvlOffset
 

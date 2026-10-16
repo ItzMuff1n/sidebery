@@ -107,6 +107,7 @@ export function updateSettings(settings?: SettingsState | null): void {
   const colorScheme = prev.colorScheme !== next.colorScheme
   const ctxMenuCtrIgnore = prev.ctxMenuIgnoreContainers !== next.ctxMenuIgnoreContainers
   const fontSize = prev.fontSize !== next.fontSize
+  const sidebarSide = prev.sidebarSide !== next.sidebarSide
   const fontFamily = prev.fontFamily !== next.fontFamily
   const updateSidebarTitleChanged = prev.updateSidebarTitle !== next.updateSidebarTitle
   const pinnedTabsPositionChanged = prev.pinnedTabsPosition !== next.pinnedTabsPosition
@@ -200,6 +201,7 @@ export function updateSettings(settings?: SettingsState | null): void {
     }
   }
   if (ctxMenuCtrIgnore) Menu.parseContainersRules()
+  if (Info.isSidebar && sidebarSide) Styles.updateSidebarSide()
   if (fontSize) Styles.updateGlobalFontSize()
   if (fontFamily) Styles.udpateGlobalFontFamily()
 

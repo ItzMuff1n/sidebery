@@ -109,6 +109,7 @@ async function main(): Promise<void> {
   Styles.reactivate(reactive)
   Sync.reactivate(reactive)
 
+  Styles.updateSidebarSide()
   Styles.updateGlobalFontSize()
   Styles.udpateGlobalFontFamily()
 
