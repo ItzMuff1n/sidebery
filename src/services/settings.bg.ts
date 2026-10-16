@@ -10,6 +10,7 @@ import * as Styles from 'src/services/styles.bg'
 import * as SnapshotsBg from 'src/services/snapshots.bg'
 import * as IPC from 'src/services/ipc'
 import * as Logs from 'src/services/logs'
+import * as BrowserUI from 'src/services/browser-ui.bg'
 
 import * as Settings from 'src/services/settings'
 export * from 'src/services/settings'
@@ -111,6 +112,7 @@ export function updateSettingsBg(settings?: SettingsState | null): void {
   }
 
   Settings.updPrecalcSettings()
+  BrowserUI.apply()
 }
 
 export function resetSettings(): void {

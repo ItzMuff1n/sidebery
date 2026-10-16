@@ -9,8 +9,49 @@ section(ref="el")
     dbg="sidebarSide"
     :default="DEFAULT_SETTINGS.sidebarSide"
     :opts="Settings.getOpts('sidebarSide')"
-    :note="translate('settings.sidebar_side_note')"
+    :note="translate(browserUI ? 'settings.sidebar_side_note_synced' : 'settings.sidebar_side_note')"
     @update:value="Settings.saveDebounced(150)")
+  ToggleField(
+    label="settings.autohide"
+    dbg="autohide"
+    v-model:value="Settings.state.autohide"
+    :inactive="!browserUI"
+    :default="DEFAULT_SETTINGS.autohide"
+    :note="browserUI ? '' : translate('settings.autohide_unavailable')"
+    @update:value="Settings.saveDebounced(150)")
+  .sub-fields
+    NumField.-inline(
+      label="settings.autohide_width"
+      v-model:value="Settings.state.autohideWidth"
+      dbg="autohideWidth"
+      :default="DEFAULT_SETTINGS.autohideWidth"
+      :inactive="!browserUI || !Settings.state.autohide"
+      :or="DEFAULT_SETTINGS.autohideWidth"
+      @update:value="Settings.saveDebounced(500)")
+    NumField.-inline(
+      label="settings.autohide_pull_out"
+      v-model:value="Settings.state.autohidePullOut"
+      dbg="autohidePullOut"
+      :default="DEFAULT_SETTINGS.autohidePullOut"
+      :inactive="!browserUI || !Settings.state.autohide"
+      :or="0"
+      @update:value="Settings.saveDebounced(500)")
+    NumField.-inline(
+      label="settings.autohide_pull_in"
+      v-model:value="Settings.state.autohidePullIn"
+      dbg="autohidePullIn"
+      :default="DEFAULT_SETTINGS.autohidePullIn"
+      :inactive="!browserUI || !Settings.state.autohide"
+      :or="0"
+      @update:value="Settings.saveDebounced(500)")
+    NumField.-inline(
+      label="settings.autohide_buffer"
+      v-model:value="Settings.state.autohideBuffer"
+      dbg="autohideBuffer"
+      :default="DEFAULT_SETTINGS.autohideBuffer"
+      :inactive="!browserUI || !Settings.state.autohide"
+      :or="0"
+      @update:value="Settings.saveDebounced(500)")
   ToggleField(
     label="settings.native_scrollbars"
     dbg="nativeScrollbars"
@@ -100,8 +141,11 @@ import * as SetupPage from 'src/services/setup-page.fg'
 import ToggleField from '../../components/toggle-field.vue'
 import SelectField from '../../components/select-field.vue'
 import TextField from '../../components/text-field.vue'
+import NumField from '../../components/num-field.vue'
 import * as Permissions from 'src/services/permissions.fg'
 
+// Experiment API, see src/services/browser-ui.bg.ts
+const browserUI = 'browserUI' in browser
 const el = ref<HTMLElement | null>(null)
 const state = reactive({
   storageOveral: '-',

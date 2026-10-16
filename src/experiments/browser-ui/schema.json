@@ -1,0 +1,81 @@
+[
+  {
+    "namespace": "browserUI",
+    "description": "Sidebery parts that need the browser window itself: the sidebar side and the auto-hide sidebar.",
+    "functions": [
+      {
+        "name": "getSidebarSide",
+        "type": "function",
+        "async": true,
+        "parameters": []
+      },
+      {
+        "name": "setSidebarSide",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "name": "side",
+            "type": "string",
+            "enum": ["left", "right"]
+          }
+        ]
+      },
+      {
+        "name": "setAutohide",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "name": "conf",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "width": {
+                "type": "integer",
+                "optional": true
+              },
+              "pullOut": {
+                "type": "integer",
+                "optional": true
+              },
+              "pullIn": {
+                "type": "integer",
+                "optional": true
+              },
+              "buffer": {
+                "type": "integer",
+                "optional": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "events": [
+      {
+        "name": "onSidebarSideChanged",
+        "type": "function",
+        "parameters": [
+          {
+            "name": "side",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "onAutohideWidthChanged",
+        "type": "function",
+        "description": "The panel was resized by dragging its inner edge. width is 0 after a double-click reset.",
+        "parameters": [
+          {
+            "name": "width",
+            "type": "integer"
+          }
+        ]
+      }
+    ]
+  }
+]

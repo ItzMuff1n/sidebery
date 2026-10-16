@@ -1,0 +1,142 @@
+/* Sidebery auto-hide sidebar. This file is MPL 2.0: it is derived from autohide_sidebar.css of
+ * https://github.com/MrOtherGuy/firefox-csshacks (Mozilla Public License v. 2.0, https://mozilla.org/MPL/2.0/).
+ *
+ * Loaded by api.js as a USER sheet (same level as userChrome.css) into every browser window. It only matches
+ * while api.js marks #sidebar-box with [sidebery-autohide] (Sidebery's panel is shown and auto-hide is on).
+ * api.js sets [sidebery-open] and the variables --sidebery-ah-width / -pull-out / -pull-in; this file only animates.
+ *
+ * - The box takes NO layout space: a strip that keeps layout width always shows a line next to the page.
+ * - The hover zone is a transparent ::before over the outer --sidebery-ah-trigger px of the page edge.
+ * - The panel is always laid out at full width and only slid with a transform (Sidebery re-lays out
+ *   when its width changes, icons pop).
+ * - End side: box direction is rtl, the panel hangs left of the window edge; closed = pushed right.
+ */
+
+#sidebar-box[sidebery-autohide] {
+  --sidebery-ah-trigger: 2px;
+  position: relative;
+  min-width: 0 !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  z-index: 3;
+  direction: ltr;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+#sidebar-box[sidebery-autohide]:is([positionend], [sidebar-positionend]) {
+  direction: rtl;
+}
+#browser:has(#sidebar-box[sidebery-autohide]) {
+  #sidebar-splitter {
+    display: none;
+  }
+  /* divider next to the sidebar, also costs the page 1px */
+  .browserContainer {
+    border-inline-width: 0 !important;
+  }
+}
+
+/* The panel: full width, background and a 1px divider on its inner edge */
+#sidebar-box[sidebery-autohide] {
+  > #sidebar-header,
+  #sidebar {
+    min-width: var(--sidebery-ah-width) !important;
+    background-color: inherit !important;
+    direction: ltr;
+    border-inline: 1px solid rgb(80, 80, 80);
+    border-inline-width: 0 1px;
+    transition: none !important;
+  }
+  &:is([positionend], [sidebar-positionend]) > #sidebar-header,
+  &:is([positionend], [sidebar-positionend]) #sidebar {
+    border-inline-width: 1px 0;
+  }
+  > #sidebar-header {
+    overflow: hidden;
+    padding-inline: 0 !important;
+    color: var(--chrome-color, inherit) !important;
+    &::before,
+    &::after {
+      content: '';
+      display: flex;
+      padding-left: 8px;
+    }
+  }
+  .sidebar-browser-stack {
+    background: inherit;
+  }
+}
+
+/* Trigger strip at the window edge */
+#sidebar-box[sidebery-autohide]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--sidebery-ah-trigger);
+  z-index: 10;
+}
+/* Hover zone: once the strip was touched, the whole final panel area counts as hovered, even where the
+ * panel has not slid in yet; without it the pointer can be inside the final area but outside the moving
+ * panel and it flaps. Behind the panel (the box is a stacking context) and only while open. */
+#sidebar-box[sidebery-autohide]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--sidebery-ah-width);
+  z-index: -1;
+  pointer-events: none;
+}
+#sidebar-box[sidebery-autohide][sidebery-open]::after {
+  pointer-events: auto;
+}
+#sidebar-box[sidebery-autohide]:is([positionend], [sidebar-positionend]) {
+  &::before,
+  &::after {
+    left: auto;
+    right: 0;
+  }
+}
+
+/* Slide */
+#sidebar-box[sidebery-autohide] > :is(#sidebar-header, .sidebar-browser-stack, #sidebery-resizer) {
+  transform: translateX(calc(-1 * var(--sidebery-ah-width)));
+  transition: transform var(--sidebery-ah-pull-in) linear !important;
+}
+#sidebar-box[sidebery-autohide]:is([positionend], [sidebar-positionend])
+  > :is(#sidebar-header, .sidebar-browser-stack, #sidebery-resizer) {
+  transform: translateX(var(--sidebery-ah-width));
+}
+#sidebar-box[sidebery-autohide][sidebery-open]
+  > :is(#sidebar-header, .sidebar-browser-stack, #sidebery-resizer) {
+  transform: none;
+  transition-duration: var(--sidebery-ah-pull-out) !important;
+}
+
+/* Resize handle (created by api.js): 8px on the inner edge of the panel, grabbable only while open */
+#sidebery-resizer {
+  display: none;
+}
+#sidebar-box[sidebery-autohide] > #sidebery-resizer {
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sidebery-ah-width) - 4px);
+  width: 8px;
+  z-index: 11;
+  cursor: ew-resize;
+  pointer-events: none;
+}
+#sidebar-box[sidebery-autohide]:is([positionend], [sidebar-positionend]) > #sidebery-resizer {
+  left: auto;
+  right: calc(var(--sidebery-ah-width) - 4px);
+}
+#sidebar-box[sidebery-autohide][sidebery-open] > #sidebery-resizer {
+  pointer-events: auto;
+}

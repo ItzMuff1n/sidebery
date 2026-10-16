@@ -1087,6 +1087,27 @@ Liste de “sous-chaines” ou “/RegExp/” avec une entrée par ligne:
   'settings.sidebar_side_note': {
     en: "Mirrors the whole layout. Set it to match the side where Firefox shows the sidebar (right-click the sidebar header → Move Sidebar to Right). The browser itself decides the side; this option can't detect it.",
   },
+  'settings.sidebar_side_note_synced': {
+    en: "Mirrors the whole layout and moves Firefox's sidebar. Firefox's own Move Sidebar to Left/Right changes this option too.",
+  },
+  'settings.autohide': {
+    en: 'Auto-hide sidebar',
+  },
+  'settings.autohide_unavailable': {
+    en: 'Needs extensions.experiments.enabled = true in about:config, then restart the browser.',
+  },
+  'settings.autohide_width': {
+    en: 'Width (px)',
+  },
+  'settings.autohide_pull_out': {
+    en: 'Slide-out time (ms)',
+  },
+  'settings.autohide_pull_in': {
+    en: 'Slide-in time (ms)',
+  },
+  'settings.autohide_buffer': {
+    en: 'Stay open after the pointer leaves (ms)',
+  },
   'settings.native_scrollbars': {
     en: 'Use native scroll-bars',
     de: 'Nativen Scroll-Balken verwenden',

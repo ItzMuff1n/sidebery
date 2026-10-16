@@ -16,7 +16,7 @@
   },
   "author": "mbnuqw",
   "name": "Sidebery Right",
-  "version": "5.6.1.1",
+  "version": "5.6.1.3",
   "default_locale": "en",
   "description": "Sidebery with a sidebar position (left/right) setting. Separate add-on, not updated from the store.",
   "homepage_url": "https://github.com/ItzMuff1n/sidebery",
@@ -65,6 +65,16 @@
     "default_icon": "./assets/proxy-native.svg",
     "default_title": "Sidebery proxy off",
     "default_popup": "./popup.proxy/proxy.html"
+  },
+  "experiment_apis": {
+    "browserUI": {
+      "schema": "experiments/browser-ui/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "paths": [["browserUI"]],
+        "script": "experiments/browser-ui/api.js"
+      }
+    }
   },
   "commands": {
     "_execute_sidebar_action": {

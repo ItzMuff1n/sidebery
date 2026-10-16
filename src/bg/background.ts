@@ -18,6 +18,7 @@ import * as WebReq from 'src/services/web-req.bg'
 import * as Sync from 'src/services/sync.bg'
 import * as Omnibox from 'src/services/omnibox.bg'
 import * as Styles from 'src/services/styles.bg'
+import * as BrowserUI from 'src/services/browser-ui.bg'
 
 void (async function main() {
   markLocalStorage()
@@ -78,6 +79,7 @@ void (async function main() {
   Info.saveVersion()
   Windows.setupWindowsListeners()
   Settings.setupSettingsChangeListener()
+  BrowserUI.load()
 
   await Sidebar.load()
   Sidebar.setupListeners()
