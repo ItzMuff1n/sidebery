@@ -14,13 +14,15 @@ interface Event<T> {
   addListener(cb: (arg: T) => void): void
 }
 interface AutohideConf {
-  enabled: boolean
-  width?: number
-  pullOut?: number
-  pullIn?: number
-  buffer?: number
-  anim?: string
-  top?: string
+  sidebar: boolean
+  toolbar: boolean
+  toolbarTrigger: number
+  width: number
+  pullOut: number
+  pullIn: number
+  buffer: number
+  anim: string
+  top: string
 }
 interface BrowserUIAPI {
   getSidebarSide(): Promise<Side>
@@ -78,14 +80,16 @@ export function apply(): void {
     api.setSidebarSide(s.sidebarSide)
   }
 
-  const conf: AutohideConf = { enabled: s.autohide }
-  if (s.autohide) {
-    conf.width = toInt(s.autohideWidth, DEFAULT_SETTINGS.autohideWidth)
-    conf.pullOut = toInt(s.autohidePullOut, DEFAULT_SETTINGS.autohidePullOut)
-    conf.pullIn = toInt(s.autohidePullIn, DEFAULT_SETTINGS.autohidePullIn)
-    conf.buffer = toInt(s.autohideBuffer, DEFAULT_SETTINGS.autohideBuffer)
-    conf.anim = s.autohideAnim
-    conf.top = s.autohideTop
+  const conf: AutohideConf = {
+    sidebar: s.autohide,
+    toolbar: s.autohideToolbar,
+    toolbarTrigger: toInt(s.autohideToolbarTrigger, DEFAULT_SETTINGS.autohideToolbarTrigger),
+    width: toInt(s.autohideWidth, DEFAULT_SETTINGS.autohideWidth),
+    pullOut: toInt(s.autohidePullOut, DEFAULT_SETTINGS.autohidePullOut),
+    pullIn: toInt(s.autohidePullIn, DEFAULT_SETTINGS.autohidePullIn),
+    buffer: toInt(s.autohideBuffer, DEFAULT_SETTINGS.autohideBuffer),
+    anim: s.autohideAnim,
+    top: s.autohideTop,
   }
   const json = JSON.stringify(conf)
   if (json === appliedAutohide) return

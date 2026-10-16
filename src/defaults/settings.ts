@@ -13,6 +13,8 @@ export const DEFAULT_SETTINGS: SettingsState = {
   autohideBuffer: 600,
   autohideAnim: 'slide',
   autohideTop: 'below',
+  autohideToolbar: false,
+  autohideToolbarTrigger: 8,
   selWinScreenshots: false,
   updateSidebarTitle: true,
   markWindow: false,

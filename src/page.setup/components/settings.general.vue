@@ -72,6 +72,23 @@ section(ref="el")
       :note="translate('settings.autohide_top_note')"
       @update:value="Settings.saveDebounced(150)")
   ToggleField(
+    label="settings.autohide_toolbar"
+    dbg="autohideToolbar"
+    v-model:value="Settings.state.autohideToolbar"
+    :inactive="!browserUI"
+    :default="DEFAULT_SETTINGS.autohideToolbar"
+    :note="browserUI ? translate('settings.autohide_toolbar_note') : translate('settings.autohide_unavailable')"
+    @update:value="Settings.saveDebounced(150)")
+  .sub-fields
+    NumField.-inline(
+      label="settings.autohide_toolbar_trigger"
+      v-model:value="Settings.state.autohideToolbarTrigger"
+      dbg="autohideToolbarTrigger"
+      :default="DEFAULT_SETTINGS.autohideToolbarTrigger"
+      :inactive="!browserUI || !Settings.state.autohideToolbar"
+      :or="DEFAULT_SETTINGS.autohideToolbarTrigger"
+      @update:value="Settings.saveDebounced(500)")
+  ToggleField(
     label="settings.native_scrollbars"
     dbg="nativeScrollbars"
     v-model:value="Settings.state.nativeScrollbars"

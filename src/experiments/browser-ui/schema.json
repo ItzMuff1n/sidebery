@@ -30,8 +30,15 @@
             "name": "conf",
             "type": "object",
             "properties": {
-              "enabled": {
+              "sidebar": {
                 "type": "boolean"
+              },
+              "toolbar": {
+                "type": "boolean"
+              },
+              "toolbarTrigger": {
+                "type": "integer",
+                "optional": true
               },
               "width": {
                 "type": "integer",

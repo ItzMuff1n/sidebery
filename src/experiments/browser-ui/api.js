@@ -15,6 +15,9 @@
  * - a popup (context menu...), a drag, a resize or keyboard focus inside the panel keeps it open
  * - parity with the stock sidebar: resize handle on the inner edge (double-click resets), reveals on
  *   keyboard shortcuts that show/switch the sidebar, on keyboard focus and on drag-over
+ *
+ * Auto-hide toolbar: toolbar.css hides the toolbox; a transparent strip over the top window edge
+ * (above the page and the sidebar) reveals it, see the end of toolbar.css.
  */
 
 const POS_PREF = 'sidebar.position_start'
@@ -27,7 +30,7 @@ const getSide = () => (Services.prefs.getBoolPref(POS_PREF, true) ? 'left' : 'ri
 
 this.browserUI = class extends ExtensionAPI {
   onShutdown() {
-    if (this.wins) this.setAutohide({ enabled: false })
+    if (this.wins) this.setAutohide({ sidebar: false, toolbar: false })
   }
 
   /** Same id Firefox gives the sidebar_action (ext-sidebarAction makeWidgetId) */
@@ -41,6 +44,7 @@ this.browserUI = class extends ExtensionAPI {
     this.wins = new Map() // window -> { detach, update }
     this.widthListeners = new Set()
     this.sheet = this.extension.baseURI.resolve('experiments/browser-ui/autohide.css')
+    this.toolbarSheet = this.extension.baseURI.resolve('experiments/browser-ui/toolbar.css')
     this.onWindowOpened = (subject, topic) => {
       if (topic !== 'domwindowopened') return
       subject.addEventListener('load', () => this.attach(subject), { once: true })
@@ -49,10 +53,10 @@ this.browserUI = class extends ExtensionAPI {
 
   setAutohide(conf) {
     this.init()
-    const wasEnabled = !!this.conf?.enabled
+    const wasEnabled = !!(this.conf?.sidebar || this.conf?.toolbar)
     this.conf = conf
 
-    if (!conf.enabled) {
+    if (!conf.sidebar && !conf.toolbar) {
       if (!wasEnabled) return
       Services.ww.unregisterNotification(this.onWindowOpened)
       for (const w of this.wins.values()) w.detach()
@@ -74,7 +78,7 @@ this.browserUI = class extends ExtensionAPI {
   }
 
   attach(win) {
-    if (this.wins.has(win) || !this.conf?.enabled) return
+    if (this.wins.has(win) || !(this.conf?.sidebar || this.conf?.toolbar)) return
     const doc = win.document
     if (doc.documentElement.getAttribute('windowtype') !== 'navigator:browser') return
     const box = doc.getElementById('sidebar-box')
@@ -155,7 +159,10 @@ this.browserUI = class extends ExtensionAPI {
     // Applies only while Sidebery's panel is the one in the box. Keyboard shortcuts and menu items
     // show or switch the sidebar by changing these attributes (ignore the session restore at startup).
     const sync = () => {
-      const ours = box.getAttribute('sidebarcommand') === this.sidebarCommand && !box.hidden
+      const ours =
+        this.conf.sidebar &&
+        box.getAttribute('sidebarcommand') === this.sidebarCommand &&
+        !box.hidden
       if (ours) box.setAttribute('sidebery-autohide', '')
       else {
         box.removeAttribute('sidebery-autohide')
@@ -200,8 +207,50 @@ this.browserUI = class extends ExtensionAPI {
     }
     toolbox.addEventListener('transitionrun', onToolboxTransition)
 
+    // Auto-hide toolbar: reveal strip, see toolbar.css
+    const root = doc.documentElement
+    let trigger = null
+    let tbTimer = null
+    const tbCheck = () => {
+      tbTimer = null
+      // Keep forcing it while the pointer is on the toolbox (or still on its way, see the first delay)
+      if (toolbox.matches(':hover')) tbTimer = win.setTimeout(tbCheck, 100)
+      else root.removeAttribute('sidebery-toolbar-reveal')
+    }
+    const onTrigger = () => {
+      root.setAttribute('sidebery-toolbar-reveal', '')
+      if (tbTimer !== null) win.clearTimeout(tbTimer)
+      // the toolbox needs ~115ms to show and get under the pointer
+      tbTimer = win.setTimeout(tbCheck, 400)
+    }
+    const setToolbar = on => {
+      if (on === !!trigger) return
+      if (on) {
+        utils.loadSheetUsingURIString(this.toolbarSheet, utils.USER_SHEET)
+        trigger = doc.createElementNS(XHTML, 'div')
+        trigger.id = 'sidebery-toolbar-trigger'
+        trigger.addEventListener('mouseenter', onTrigger)
+        toolbox.after(trigger)
+      } else {
+        if (tbTimer !== null) win.clearTimeout(tbTimer)
+        tbTimer = null
+        trigger.remove()
+        trigger = null
+        root.removeAttribute('sidebery-toolbar-reveal')
+        root.style.removeProperty('--sidebery-tb-trigger')
+        try {
+          utils.removeSheetUsingURIString(this.toolbarSheet, utils.USER_SHEET)
+        } catch {
+          // window is already closed
+        }
+      }
+    }
+
     // Settings
     const update = () => {
+      setToolbar(!!this.conf.toolbar)
+      if (trigger) root.style.setProperty('--sidebery-tb-trigger', `${this.conf.toolbarTrigger}px`)
+      sync()
       box.style.setProperty('--sidebery-ah-width', `${this.conf.width}px`)
       box.style.setProperty('--sidebery-ah-pull-out', `${this.conf.pullOut}ms`)
       box.style.setProperty('--sidebery-ah-pull-in', `${this.conf.pullIn}ms`)
@@ -209,7 +258,6 @@ this.browserUI = class extends ExtensionAPI {
       setTop()
     }
     update()
-    sync()
 
     // Resize handle on the inner edge of the panel
     const handle = doc.createElementNS(XHTML, 'div')
@@ -269,6 +317,7 @@ this.browserUI = class extends ExtensionAPI {
       box.removeEventListener('mouseleave', onLeave)
       doc.removeEventListener('popupshown', onPopupShown, true)
       doc.removeEventListener('popuphidden', onPopupHidden, true)
+      setToolbar(false)
       ro.disconnect()
       toolbox.removeEventListener('transitionrun', onToolboxTransition)
       box.removeAttribute('sidebery-autohide')

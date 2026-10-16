@@ -8,6 +8,7 @@ const COPY = {
   './src/experiments/browser-ui/schema.json': `${Utils.ADDON_PATH}/experiments/browser-ui/`,
   './src/experiments/browser-ui/api.js': `${Utils.ADDON_PATH}/experiments/browser-ui/`,
   './src/experiments/browser-ui/autohide.css': `${Utils.ADDON_PATH}/experiments/browser-ui/`,
+  './src/experiments/browser-ui/toolbar.css': `${Utils.ADDON_PATH}/experiments/browser-ui/`,
   './src/manifest.json': {
     path: `${Utils.ADDON_PATH}/`,
     handler: handleManifest,
