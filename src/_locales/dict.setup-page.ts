@@ -1119,9 +1119,13 @@ Liste de “sous-chaines” ou “/RegExp/” avec une entrée par ligne:
   'settings.autohide_top_follow': { en: 'push down' },
   'settings.autohide_toolbar': { en: 'Auto-hide toolbar' },
   'settings.autohide_toolbar_note': {
-    en: 'Hides the toolbar (and the title bar it holds) until the pointer touches the top edge of the window, or the address bar is focused. Remove other toolbar auto-hide rules from userChrome.css.',
+    en: 'Hides the toolbar until the pointer touches the top edge of the window, or the address bar is focused. Remove other toolbar auto-hide rules from userChrome.css.',
   },
   'settings.autohide_toolbar_trigger': { en: 'Top edge trigger height (px)' },
+  'settings.autohide_titlebar': { en: 'Hide the title bar too' },
+  'settings.autohide_titlebar_note': {
+    en: 'Draws the window buttons inside the toolbar instead of a separate title bar, so they hide with it (sets browser.tabs.inTitlebar = 1; the old value comes back when this or Auto-hide toolbar is turned off).',
+  },
   'settings.autohide_top_note': {
     en: 'For a toolbar hidden by userChrome.css. Leave room: the sidebar always starts below it. Push down: the sidebar moves down while the toolbar shows.',
   },

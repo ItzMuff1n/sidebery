@@ -17,6 +17,7 @@ interface AutohideConf {
   sidebar: boolean
   toolbar: boolean
   toolbarTrigger: number
+  titlebar: boolean
   width: number
   pullOut: number
   pullIn: number
@@ -84,6 +85,7 @@ export function apply(): void {
     sidebar: s.autohide,
     toolbar: s.autohideToolbar,
     toolbarTrigger: toInt(s.autohideToolbarTrigger, DEFAULT_SETTINGS.autohideToolbarTrigger),
+    titlebar: s.autohideTitlebar,
     width: toInt(s.autohideWidth, DEFAULT_SETTINGS.autohideWidth),
     pullOut: toInt(s.autohidePullOut, DEFAULT_SETTINGS.autohidePullOut),
     pullIn: toInt(s.autohidePullIn, DEFAULT_SETTINGS.autohidePullIn),

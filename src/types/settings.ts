@@ -15,6 +15,7 @@ export interface SettingsState {
   autohideTop: (typeof SETTINGS_OPTIONS.autohideTop)[number]
   autohideToolbar: boolean
   autohideToolbarTrigger: number
+  autohideTitlebar: boolean
   selWinScreenshots: boolean
   updateSidebarTitle: boolean
   markWindow: boolean

@@ -18,9 +18,13 @@
  *
  * Auto-hide toolbar: toolbar.css hides the toolbox; a transparent strip over the top window edge
  * (above the page and the sidebar) reveals it, see the end of toolbar.css.
+ * Its title bar option sets browser.tabs.inTitlebar = 1 (Firefox draws the title bar inside the toolbox,
+ * so it hides too). The old value is kept in a pref, so it survives a crash and comes back when turned off.
  */
 
 const POS_PREF = 'sidebar.position_start'
+const TITLEBAR_PREF = 'browser.tabs.inTitlebar'
+const BACKUP_PREF = 'extensions.sidebery-right.inTitlebarBackup' // string; '' = was the default
 const XHTML = 'http://www.w3.org/1999/xhtml'
 const MIN_WIDTH = 160
 const MAX_WIDTH_RATIO = 0.8
@@ -28,9 +32,29 @@ const MAX_WIDTH_RATIO = 0.8
 // ponytail: ltr locales only; in rtl locales position_start means the right side
 const getSide = () => (Services.prefs.getBoolPref(POS_PREF, true) ? 'left' : 'right')
 
+function setTitlebar(on) {
+  const prefs = Services.prefs
+  if (on) {
+    if (!prefs.prefHasUserValue(BACKUP_PREF)) {
+      const old = prefs.prefHasUserValue(TITLEBAR_PREF)
+        ? String(prefs.getIntPref(TITLEBAR_PREF))
+        : ''
+      prefs.setStringPref(BACKUP_PREF, old)
+    }
+    prefs.setIntPref(TITLEBAR_PREF, 1)
+  } else if (prefs.prefHasUserValue(BACKUP_PREF)) {
+    const old = prefs.getStringPref(BACKUP_PREF)
+    if (old === '') prefs.clearUserPref(TITLEBAR_PREF)
+    else prefs.setIntPref(TITLEBAR_PREF, Number(old))
+    prefs.clearUserPref(BACKUP_PREF)
+  }
+}
+
 this.browserUI = class extends ExtensionAPI {
-  onShutdown() {
-    if (this.wins) this.setAutohide({ sidebar: false, toolbar: false })
+  onShutdown(isAppShutdown) {
+    // On app quit keep the title bar pref, or every start would flicker from the system title bar to ours
+    if (!isAppShutdown) setTitlebar(false)
+    if (this.wins) this.setAutohide({ sidebar: false, toolbar: false }, true)
   }
 
   /** Same id Firefox gives the sidebar_action (ext-sidebarAction makeWidgetId) */
@@ -51,7 +75,8 @@ this.browserUI = class extends ExtensionAPI {
     }
   }
 
-  setAutohide(conf) {
+  setAutohide(conf, keepTitlebar) {
+    if (!keepTitlebar) setTitlebar(!!(conf.toolbar && conf.titlebar))
     this.init()
     const wasEnabled = !!(this.conf?.sidebar || this.conf?.toolbar)
     this.conf = conf

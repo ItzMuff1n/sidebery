@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: SettingsState = {
   autohideTop: 'below',
   autohideToolbar: false,
   autohideToolbarTrigger: 8,
+  autohideTitlebar: true,
   selWinScreenshots: false,
   updateSidebarTitle: true,
   markWindow: false,

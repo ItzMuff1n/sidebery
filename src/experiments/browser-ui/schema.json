@@ -36,6 +36,10 @@
               "toolbar": {
                 "type": "boolean"
               },
+              "titlebar": {
+                "type": "boolean",
+                "optional": true
+              },
               "toolbarTrigger": {
                 "type": "integer",
                 "optional": true

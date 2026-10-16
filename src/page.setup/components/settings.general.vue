@@ -88,6 +88,14 @@ section(ref="el")
       :inactive="!browserUI || !Settings.state.autohideToolbar"
       :or="DEFAULT_SETTINGS.autohideToolbarTrigger"
       @update:value="Settings.saveDebounced(500)")
+    ToggleField(
+      label="settings.autohide_titlebar"
+      dbg="autohideTitlebar"
+      v-model:value="Settings.state.autohideTitlebar"
+      :inactive="!browserUI || !Settings.state.autohideToolbar"
+      :default="DEFAULT_SETTINGS.autohideTitlebar"
+      :note="translate('settings.autohide_titlebar_note')"
+      @update:value="Settings.saveDebounced(150)")
   ToggleField(
     label="settings.native_scrollbars"
     dbg="nativeScrollbars"
