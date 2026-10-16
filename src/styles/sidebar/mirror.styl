@@ -4,9 +4,12 @@
 // Most of the mirroring is generated from the rules of the other files
 // (see build/styles.js): html[data-sidebar-side="right"] gets direction: rtl
 // (sidebar.html) and the flipped copies of the directional rules.
+// Rows of tabs have their own side (the "Tab icon and text side" setting):
+// the flipped copies of the rules targeting them are scoped to
+// html[data-tabs-side="right"] instead.
 // Everything below is what the automatic flipping cannot know about, so it is
-// written by hand. The flipping skips rules that already contain the
-// html[data-sidebar-side="right"] prefix.
+// written by hand. The flipping skips rules that already contain one of the
+// html[data-sidebar-side="right"] / html[data-tabs-side="right"] prefixes.
 html[data-sidebar-side="right"]
 
   // Scroll-bar stays at the right edge by default, the "scroll-bar at the left"
@@ -25,6 +28,82 @@ html[data-sidebar-side="right"]
     direction: ltr
   .CtxMenu .box
     direction: rtl
+
+  // ---
+  // -- Other text: ltr, aligned to the icon (right), ellipsis instead of the fade
+  // -
+  .BookmarkNode .title
+  .BookmarkCard .title
+  .BookmarkCard .info
+  .HistoryPanel .item .title
+  .SyncEntry .sync-tab .title
+  .ClosedTabsSubPanel .closed-tab .title
+  .CtxMenu .opt .label
+    direction: ltr
+    text-align: right
+    mask: none
+    text-overflow: ellipsis
+  .ClosedTabsSubPanel .closed-tab .t-box
+    mask: none
+  .CtxMenu .opt:has(.flag-btn[data-active="true"]) .label
+  .CtxMenu .opt:has(.flag-btn):hover .label
+    mask: linear-gradient(90deg, transparent, transparent calc(var(--flag-btn-full-width) - 6px), #000000 calc(var(--flag-btn-full-width) + 6px), #000000)
+  .NavigationBar .nav-item .name
+  .SubListTitle .title
+  .SearchBar .input
+    direction: ltr
+    text-align: right
+  .tab-preview .preview-title
+  .tab-preview .preview-url
+    direction: ltr
+    text-align: left
+
+  // ---
+  // -- Masks and clips bound to a corner (status marks are at the left corner now)
+  // -
+  .NavigationBar .nav-item[data-updated="true"] > .icon
+    mask: radial-gradient(circle at 2px calc(100% - 2px), #00000024, #00000024 4px, #000000 5px, #000000)
+  .TabsPanel .new-tab-btn > svg.-icon
+  .TabsPanel .new-tab-btn > img.-icon
+    mask: radial-gradient(circle at 1px calc(100% - 1px), #00000024, #00000024 7px, #000000 8px, #000000)
+  .NavigationBar .nav-item .bookmarks-badge-icon + .icon
+    clip-path: polygon(100% 0%, 0% 0%, 0% 50%, 18.75% 50%, 37.5% 62.5%, 37.5% 100%, 100% 100%)
+  .CtxMenu .icon-opt .badge + .icon
+  .CtxMenu .opt .badge + .icon
+    clip-path: polygon(100% 0%, 0% 0%, 0% 100%, 56.25% 100%, 56.25% 62.5%, 100% 62.5%)
+
+  // Drag and drop pointer fades out towards the other edge
+  // (the pointer of tabs panels follows the tabs side, see below)
+  .BookmarksPanel .pointer
+  .BookmarksSubPanel .pointer
+    mask: linear-gradient(90deg, transparent, #000000 50%, #000000)
+
+  // ---
+  // -- Free text (dialogs, notifications)
+  // -
+  // Each paragraph takes its own direction from its first strong character, so
+  // punctuation stays at the right end of both Latin and RTL text.
+  // Alignment still follows the mirrored layout (right).
+  .Dialog h2
+  .Dialog .msg
+  .Dialog .note
+  .Confirm h2
+  .Confirm .msg
+  .Notifications .title
+  .Notifications .details-msg
+  .Notifications .details-list
+    unicode-bidi: plaintext
+
+// ---
+// -- Tab rows
+// -
+// Rows of tabs get their direction from the tabs side, whatever the sidebar side is.
+html[data-tabs-side="left"] .Tab
+  direction: ltr
+html[data-tabs-side="right"] .Tab
+  direction: rtl
+
+html[data-tabs-side="right"]
 
   // ---
   // -- Tab title
@@ -60,73 +139,19 @@ html[data-sidebar-side="right"]
     mask-image: none
 
   // ---
-  // -- Other text: ltr, aligned to the icon (right), ellipsis instead of the fade
-  // -
-  .BookmarkNode .title
-  .BookmarkCard .title
-  .BookmarkCard .info
-  .HistoryPanel .item .title
-  .SyncEntry .sync-tab .title
-  .ClosedTabsSubPanel .closed-tab .title
-  .CtxMenu .opt .label
-    direction: ltr
-    text-align: right
-    mask: none
-    text-overflow: ellipsis
-  .ClosedTabsSubPanel .closed-tab .t-box
-    mask: none
-  .CtxMenu .opt:has(.flag-btn[data-active="true"]) .label
-  .CtxMenu .opt:has(.flag-btn):hover .label
-    mask: linear-gradient(90deg, transparent, transparent calc(var(--flag-btn-full-width) - 6px), #000000 calc(var(--flag-btn-full-width) + 6px), #000000)
-  .NavigationBar .nav-item .name
-  .SubListTitle .title
-  .SearchBar .input
-    direction: ltr
-    text-align: right
-  .tab-preview .preview-title
-  .tab-preview .preview-url
-    direction: ltr
-    text-align: left
-
-  // ---
   // -- Masks and clips bound to a corner (status marks are at the left corner now)
   // -
   .Tab[data-updated="true"] .fav-icon
   .Tab[data-pending="true"] .fav-icon
   .Tab[data-loading="ok"] .fav-icon
   .Tab[data-loading="err"] .fav-icon
-  .NavigationBar .nav-item[data-updated="true"] > .icon
     mask: radial-gradient(circle at 2px calc(100% - 2px), #00000024, #00000024 4px, #000000 5px, #000000)
   .Tab[data-loading="true"] .fav-icon
     mask: radial-gradient(circle at 2px calc(100% - 2px), #00000024, #00000024 7px, #000000 8px, #000000)
-  .TabsPanel .new-tab-btn > svg.-icon
-  .TabsPanel .new-tab-btn > img.-icon
-    mask: radial-gradient(circle at 1px calc(100% - 1px), #00000024, #00000024 7px, #000000 8px, #000000)
-  .NavigationBar .nav-item .bookmarks-badge-icon + .icon
-    clip-path: polygon(100% 0%, 0% 0%, 0% 50%, 18.75% 50%, 37.5% 62.5%, 37.5% 100%, 100% 100%)
-  .CtxMenu .icon-opt .badge + .icon
-  .CtxMenu .opt .badge + .icon
-    clip-path: polygon(100% 0%, 0% 0%, 0% 100%, 56.25% 100%, 56.25% 62.5%, 100% 62.5%)
 
   // Drag and drop pointer fades out towards the other edge
-  .pointer
+  .TabsPanel .pointer
     mask: linear-gradient(90deg, transparent, #000000 50%, #000000)
-
-  // ---
-  // -- Free text (dialogs, notifications, multiline tab titles)
-  // -
-  // Each paragraph takes its own direction from its first strong character, so
-  // punctuation stays at the right end of both Latin and RTL text.
-  // Alignment still follows the mirrored layout (right).
-  .Dialog h2
-  .Dialog .msg
-  .Dialog .note
-  .Confirm h2
-  .Confirm .msg
-  .Notifications .title
-  .Notifications .details-msg
-  .Notifications .details-list
-    unicode-bidi: plaintext
 
   // Multiline titles: same idea, aligned to the favicon (right). The favicon room is a
   // right padding on every line (text-indent only works on the start edge of the

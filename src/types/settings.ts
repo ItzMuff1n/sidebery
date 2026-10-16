@@ -6,6 +6,7 @@ export interface SettingsState {
   nativeScrollbarsThin: boolean
   nativeScrollbarsLeft: boolean
   sidebarSide: (typeof SETTINGS_OPTIONS.sidebarSide)[number]
+  tabsSide: (typeof SETTINGS_OPTIONS.tabsSide)[number]
   autohide: boolean
   autohideWidth: number
   autohidePullOut: number

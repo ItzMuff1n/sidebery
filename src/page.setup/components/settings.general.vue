@@ -11,6 +11,15 @@ section(ref="el")
     :opts="Settings.getOpts('sidebarSide')"
     :note="translate(browserUI ? 'settings.sidebar_side_note_synced' : 'settings.sidebar_side_note')"
     @update:value="Settings.saveDebounced(150)")
+  SelectField(
+    label="settings.tabs_side"
+    optLabel="settings.tabs_side_"
+    v-model:value="Settings.state.tabsSide"
+    dbg="tabsSide"
+    :default="DEFAULT_SETTINGS.tabsSide"
+    :opts="Settings.getOpts('tabsSide')"
+    :note="translate('settings.tabs_side_note')"
+    @update:value="Settings.saveDebounced(150)")
   ToggleField(
     label="settings.autohide"
     dbg="autohide"

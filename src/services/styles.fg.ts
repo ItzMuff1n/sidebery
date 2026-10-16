@@ -234,6 +234,8 @@ export function updateSidebarSide(): void {
     'data-sidebar-side',
     Settings.state.sidebarSide === 'right' ? 'right' : 'left'
   )
+  // Tab rows have their own side (scoped styles: html[data-tabs-side="right"])
+  document.documentElement.setAttribute('data-tabs-side', Settings.getTabsSide())
 }
 
 export function updateGlobalFontSize(): void {

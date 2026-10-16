@@ -1090,6 +1090,21 @@ Liste de “sous-chaines” ou “/RegExp/” avec une entrée par ligne:
   'settings.sidebar_side_note_synced': {
     en: "Mirrors the whole layout and moves Firefox's sidebar. Firefox's own Move Sidebar to Left/Right changes this option too.",
   },
+  'settings.tabs_side': {
+    en: 'Tab icon and text side',
+  },
+  'settings.tabs_side_sidebar': {
+    en: 'same as sidebar',
+  },
+  'settings.tabs_side_left': {
+    en: 'left',
+  },
+  'settings.tabs_side_right': {
+    en: 'right',
+  },
+  'settings.tabs_side_note': {
+    en: 'Which side of a tab row holds the favicon; the title aligns to it.',
+  },
   'settings.autohide': {
     en: 'Auto-hide sidebar',
   },

@@ -333,7 +333,10 @@ body
 // ---
 // -- Drag and Drop pointer
 // -
-.pointer
+// Scoped by panel: the pointer of tabs panels follows the tabs side (see build/styles.js)
+.TabsPanel .pointer
+.BookmarksPanel .pointer
+.BookmarksSubPanel .pointer
   position: absolute
   top: 0
   left: var(--pointer-left)
@@ -392,7 +395,9 @@ for i in 1..16
   .BookmarksSubPanel .pointer[data-pointer="between"][data-lvl=\"{i}\"]:before
   .BookmarksSubPanel .pointer[data-pointer="between"][data-lvl=\"{i}\"]:after
     transform: "translateX(calc(var(--bookmarks-indent) * %s + var(--bookmarks-margin)))" % i
-.pointer .arrow
+.TabsPanel .pointer .arrow
+.BookmarksPanel .pointer .arrow
+.BookmarksSubPanel .pointer .arrow
   position: absolute
   top: 0
   left: 0

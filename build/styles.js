@@ -24,9 +24,17 @@ const ENTRIES = [
 // html[data-sidebar-side="right"]. Original rules are left untouched.
 const MIRRORED_OUTPUTS = new Set(['sidebar.css'])
 const MIRROR_ATTR = 'data-sidebar-side'
+const MIRROR_PREFIX = `[${MIRROR_ATTR}="right"]`
+// Rows of tabs have their own side (the "Tab icon and text side" setting): the overrides
+// generated for selectors targeting tab rows are scoped to html[data-tabs-side="right"] instead.
+const TABS_MIRROR_PREFIX = '[data-tabs-side="right"]'
+// `.Tab`, `.TabList` (but not `.TabsPanel` and the like) and the drop pointer of tabs panels
+const TAB_ROW_RE = /\.Tab(?![\w-])|\.TabList(?![\w-])|\.TabsPanel \.pointer(?![\w-])/
 
-// Rules that are physical by design, flipping must not touch them
-const KEEP_PHYSICAL = [/native-scrollbars-left/]
+// Rules that are physical by design, flipping must not touch them.
+// Hand-written mirrored rules (mirror.styl) carry the sidebar prefix (skipped by the flipping
+// itself) or the tabs prefix (skipped here).
+const KEEP_PHYSICAL = [/native-scrollbars-left/, /data-tabs-side=/]
 
 /**
  * Mark rules to be skipped by the flipping (rtlcss ignore directive)
@@ -43,6 +51,40 @@ const keepPhysical = () => ({
 keepPhysical.postcss = true
 
 /**
+ * Re-scope generated overrides of tab rows from the sidebar side prefix to the tabs side prefix.
+ * A selector list with parts of both kinds is split into two rules.
+ */
+const splitTabRows = () => ({
+  postcssPlugin: 'sidebery-split-tab-rows',
+  Once(root) {
+    root.walkRules(rule => {
+      if (!rule.selector.includes(MIRROR_PREFIX)) return
+
+      const tabParts = []
+      const restParts = []
+      for (const part of rule.selectors) {
+        // Only generated overrides: the hand-written ones start with `html`
+        if (part.startsWith(MIRROR_PREFIX) && TAB_ROW_RE.test(part)) {
+          tabParts.push(TABS_MIRROR_PREFIX + part.slice(MIRROR_PREFIX.length))
+        } else {
+          restParts.push(part)
+        }
+      }
+      if (!tabParts.length) return
+
+      if (!restParts.length) {
+        rule.selectors = tabParts
+      } else {
+        const tabRule = rule.clone({ selectors: tabParts })
+        rule.selectors = restParts
+        rule.after(tabRule)
+      }
+    })
+  },
+})
+splitTabRows.postcss = true
+
+/**
  * Generate mirrored overrides
  */
 async function mirror(css) {
@@ -51,11 +93,12 @@ async function mirror(css) {
     rtlcss({
       mode: Mode.override,
       source: Source.ltr,
-      rtlPrefix: `[${MIRROR_ATTR}="right"]`,
+      rtlPrefix: MIRROR_PREFIX,
       processUrls: false,
       useCalc: true,
       processKeyFrames: true,
     }),
+    splitTabRows(),
   ]).process(css, { from: undefined })
   return result.css
 }

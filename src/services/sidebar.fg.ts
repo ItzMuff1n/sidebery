@@ -719,7 +719,10 @@ export function updateBounds(): void {
   const panelContentEl = panel.scrollComponent?.getScrollableBox()
   DnD.setActivePointer(panel.id)
   let pointerStart = panelContentEl?.offsetLeft ?? 0
-  if (Settings.state.sidebarSide === 'right' && panelContentEl) {
+  const mirrored = Utils.isTabsPanel(panel)
+    ? Settings.getTabsSide() === 'right'
+    : Settings.state.sidebarSide === 'right'
+  if (mirrored && panelContentEl) {
     // Mirrored: levels start at the right edge of the scrollable box
     const boxEl = panelContentEl.offsetParent as HTMLElement | null
     if (boxEl)

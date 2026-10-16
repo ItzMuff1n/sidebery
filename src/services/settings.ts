@@ -30,6 +30,13 @@ export let stickyAncestorTabsLayoutRow = false
 export let tabsMultiLineTitle = false
 export let tabsTitleLinesMax = 1
 
+/**
+ * Side of tab rows (favicon and text): own setting or the sidebar side
+ */
+export function getTabsSide(): 'left' | 'right' {
+  return state.tabsSide === 'sidebar' ? state.sidebarSide : state.tabsSide
+}
+
 export function reactivate(r: Reactivator<SettingsState>) {
   state = r(state)
 }

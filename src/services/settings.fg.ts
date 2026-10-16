@@ -107,7 +107,7 @@ export function updateSettings(settings?: SettingsState | null): void {
   const colorScheme = prev.colorScheme !== next.colorScheme
   const ctxMenuCtrIgnore = prev.ctxMenuIgnoreContainers !== next.ctxMenuIgnoreContainers
   const fontSize = prev.fontSize !== next.fontSize
-  const sidebarSide = prev.sidebarSide !== next.sidebarSide
+  const sidebarSide = prev.sidebarSide !== next.sidebarSide || prev.tabsSide !== next.tabsSide
   const fontFamily = prev.fontFamily !== next.fontFamily
   const updateSidebarTitleChanged = prev.updateSidebarTitle !== next.updateSidebarTitle
   const pinnedTabsPositionChanged = prev.pinnedTabsPosition !== next.pinnedTabsPosition

@@ -821,7 +821,9 @@ export function onDragMove(e: DragEvent): void {
   const panelLeftOffset = panel.leftOffset ?? 0
   const panelRightOffset = panel.rightOffset ?? 0
   const panelBottomOffset = panel.bottomOffset ?? 0
-  const mirrored = Settings.state.sidebarSide === 'right'
+  const mirrored = Utils.isTabsPanel(panel)
+    ? Settings.getTabsSide() === 'right'
+    : Settings.state.sidebarSide === 'right'
   const y = e.clientY - panelTopOffset + scroll
   // Distance from the edge where the tree levels start
   const x = mirrored ? panelRightOffset - e.clientX : e.clientX - panelLeftOffset
