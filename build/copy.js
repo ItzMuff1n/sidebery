@@ -4,6 +4,7 @@ import path from 'path'
 import * as Utils from './utils.js'
 
 const COPY = {
+  './LICENSE': `${Utils.ADDON_PATH}/`,
   './src/manifest.json': {
     path: `${Utils.ADDON_PATH}/`,
     handler: handleManifest,
