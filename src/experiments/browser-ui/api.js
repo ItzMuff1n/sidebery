@@ -13,6 +13,7 @@
  * - pointer enters the box (the 2px edge strip, the open panel or the hover zone): open, cancel any close
  * - pointer leaves: close after max(buffer, pull-out) ms, so a slide-out in progress always finishes
  * - a popup (context menu...), a drag, a resize or keyboard focus inside the panel keeps it open
+ * - the pointer moving from the open panel onto the toolbar keeps it open while it stays there
  * - parity with the stock sidebar: resize handle on the inner edge (double-click resets), reveals on
  *   keyboard shortcuts that show/switch the sidebar, on keyboard focus and on drag-over
  *
@@ -117,7 +118,10 @@ this.browserUI = class extends ExtensionAPI {
     let popups = 0
     let resizing = false
     let focusHold = false
+    let toolbarHold = false
     const attachedAt = Date.now()
+    const toolbox = doc.getElementById('navigator-toolbox')
+    const root = doc.documentElement
 
     const active = () => box.hasAttribute('sidebery-autohide')
     const dragging = () => {
@@ -135,7 +139,14 @@ this.browserUI = class extends ExtensionAPI {
     const tryClose = () => {
       timer = null
       if (hovered && !box.matches(':hover')) hovered = false // a missed mouseleave must not keep it open
-      if (hovered || popups > 0 || resizing || focusHold || dragging()) {
+      if (
+        toolbarHold &&
+        !toolbox.matches(':hover') &&
+        !root.hasAttribute('sidebery-toolbar-reveal')
+      ) {
+        toolbarHold = false
+      }
+      if (hovered || popups > 0 || resizing || focusHold || toolbarHold || dragging()) {
         timer = win.setTimeout(tryClose, 250)
         return
       }
@@ -180,6 +191,10 @@ this.browserUI = class extends ExtensionAPI {
       focusHold = false
       if (!hovered && active()) scheduleClose()
     }
+    // The pointer went from the open panel to the toolbar: keep the panel open while it is there
+    const onToolbarEnter = () => {
+      if (active() && box.hasAttribute('sidebery-open')) toolbarHold = true
+    }
 
     // Applies only while Sidebery's panel is the one in the box. Keyboard shortcuts and menu items
     // show or switch the sidebar by changing these attributes (ignore the session restore at startup).
@@ -203,7 +218,6 @@ this.browserUI = class extends ExtensionAPI {
     // Top edge vs an auto-hidden toolbox (position: fixed, from userChrome.css):
     // "overlap" ignores it, "below" always leaves room for it, "follow" moves with it, using the
     // timing of the toolbox's own opacity transition, whatever made it show or hide.
-    const toolbox = doc.getElementById('navigator-toolbox')
     let toolboxH = 0
     let toolboxShown = false
     const setTop = (dur = 0, ease = 'linear', delay = 0) => {
@@ -231,9 +245,9 @@ this.browserUI = class extends ExtensionAPI {
       setTop(t.duration, t.easing, t.delay)
     }
     toolbox.addEventListener('transitionrun', onToolboxTransition)
+    toolbox.addEventListener('mouseenter', onToolbarEnter)
 
     // Auto-hide toolbar: reveal strip, see toolbar.css
-    const root = doc.documentElement
     let trigger = null
     let tbTimer = null
     const tbCheck = () => {
@@ -243,6 +257,7 @@ this.browserUI = class extends ExtensionAPI {
       else root.removeAttribute('sidebery-toolbar-reveal')
     }
     const onTrigger = () => {
+      onToolbarEnter()
       root.setAttribute('sidebery-toolbar-reveal', '')
       if (tbTimer !== null) win.clearTimeout(tbTimer)
       // the toolbox needs ~115ms to show and get under the pointer
@@ -345,6 +360,7 @@ this.browserUI = class extends ExtensionAPI {
       setToolbar(false)
       ro.disconnect()
       toolbox.removeEventListener('transitionrun', onToolboxTransition)
+      toolbox.removeEventListener('mouseenter', onToolbarEnter)
       box.removeAttribute('sidebery-autohide')
       box.removeAttribute('sidebery-open')
       box.removeAttribute('sidebery-anim')
